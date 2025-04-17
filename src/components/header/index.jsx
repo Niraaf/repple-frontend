@@ -46,16 +46,6 @@ export default function Header() {
                                 About
                             </Link>
                         </li>
-                        <li>
-                            <Link href="#projects" className="text-lg text-gray-900 hover:text-blue-600 transition-colors">
-                                Projects
-                            </Link>
-                        </li>
-                        <li>
-                            <Link href="#contact" className="text-lg text-gray-900 hover:text-blue-600 transition-colors">
-                                Contact
-                            </Link>
-                        </li>
                     </ul>
                 </nav>
 
