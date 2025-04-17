@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from "react";
-import { doSignInWithEmailAndPassword, doSignInWithGoogle } from "@/firebase/auth";
+import { doSignInWithEmailAndPassword, doSignInWithGoogle, doSignInAnonymously } from "@/firebase/auth";
 import { useAuth } from "@/contexts/authContext";
-import Link from "next/link"; // Import Link for navigation
+import Link from "next/link";
 
 const Login = () => {
     const { userLoggedIn } = useAuth();
@@ -48,6 +48,23 @@ const Login = () => {
         }
     };
 
+    const onGuestSignIn = async (e) => {
+        e.preventDefault();
+        if (!isSigningIn) {
+            setIsSigningIn(true);
+            await doSignInAnonymously()
+                .then(() => {
+                    window.location.href = "/";
+                })
+                .catch((err) => {
+                    setError(err.message);
+                })
+                .finally(() => {
+                    setIsSigningIn(false);
+                });
+        }
+    };
+
     if (userLoggedIn) {
         return (
             <div className="flex justify-center items-center min-h-screen">
@@ -65,10 +82,8 @@ const Login = () => {
             <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
                 <h1 className="text-3xl font-semibold text-center text-gray-700 mb-6">Login</h1>
 
-                {/* Error Message */}
                 {error && <p className="text-red-500 text-sm text-center mb-4">{error}</p>}
 
-                {/* Email and Password Form */}
                 <form onSubmit={onSubmit} className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-600">Email:</label>
@@ -99,7 +114,6 @@ const Login = () => {
                     </button>
                 </form>
 
-                {/* Google Sign-In Button */}
                 <button
                     onClick={onGoogleSignIn}
                     disabled={isSigningIn}
@@ -108,7 +122,14 @@ const Login = () => {
                     {isSigningIn ? "Signing In with Google..." : "Sign In with Google"}
                 </button>
 
-                {/* "Don't have an account?" Link */}
+                <button
+                    onClick={onGuestSignIn}
+                    disabled={isSigningIn}
+                    className="w-full py-2 mt-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600 disabled:bg-gray-300"
+                >
+                    {isSigningIn ? "Continuing as Guest..." : "Continue as Guest"}
+                </button>
+
                 <div className="mt-4 text-center text-sm text-gray-600">
                     Don't have an account?{" "}
                     <Link href="/register" className="text-blue-600 hover:underline">

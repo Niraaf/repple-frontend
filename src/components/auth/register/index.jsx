@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { doCreateUserWithEmailAndPassword, doSignInWithGoogle } from "@/firebase/auth";
+import {
+    doCreateUserWithEmailAndPassword,
+    doSignInWithGoogle,
+    doSignInAnonymously
+} from "@/firebase/auth";
 
 const Register = () => {
     const [email, setEmail] = useState("");
@@ -25,7 +29,6 @@ const Register = () => {
 
             try {
                 await doCreateUserWithEmailAndPassword(email, password);
-                // Redirect to home after successful registration
                 window.location.href = "/";
             } catch (err) {
                 setError(err.message);
@@ -41,7 +44,20 @@ const Register = () => {
             setIsRegistering(true);
             try {
                 await doSignInWithGoogle();
-                // Redirect to home after successful Google sign-in
+                window.location.href = "/";
+            } catch (err) {
+                setError(err.message);
+            } finally {
+                setIsRegistering(false);
+            }
+        }
+    };
+
+    const onGuestSignIn = async () => {
+        if (!isRegistering) {
+            setIsRegistering(true);
+            try {
+                await doSignInAnonymously();
                 window.location.href = "/";
             } catch (err) {
                 setError(err.message);
@@ -114,9 +130,17 @@ const Register = () => {
                 <button
                     onClick={onGoogleSignIn}
                     disabled={isRegistering}
-                    className="w-full py-2 px-4 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:bg-gray-300"
+                    className="w-full py-2 px-4 mb-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:bg-gray-300"
                 >
                     {isRegistering ? "Signing in with Google..." : "Sign in with Google"}
+                </button>
+
+                <button
+                    onClick={onGuestSignIn}
+                    disabled={isRegistering}
+                    className="w-full py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 disabled:bg-gray-300"
+                >
+                    {isRegistering ? "Continuing as Guest..." : "Continue as Guest"}
                 </button>
 
                 <div className="mt-4 text-center text-sm text-gray-600">

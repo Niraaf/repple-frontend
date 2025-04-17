@@ -4,13 +4,13 @@ import { getAuth } from "firebase/auth";
 
 // Initialize Firebase
 const firebaseConfig = {
-  apiKey: "AIzaSyCyULj04FmBInFJhJ-xVucrBfhj63jKrW8",
-  authDomain: "repple-dd229.firebaseapp.com",
-  projectId: "repple-dd229",
-  storageBucket: "repple-dd229.firebasestorage.app",
-  messagingSenderId: "677625973911",
-  appId: "1:677625973911:web:1139f3a454c4339a906dd2",
-  measurementId: "G-D03YEHPZRB",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
 // Initialize Firebase
