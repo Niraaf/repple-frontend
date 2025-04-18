@@ -9,7 +9,7 @@ export default function Header() {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isSigningOut, setIsSigningOut] = useState(false);
     const [error, setError] = useState(null);
-    const { userLoggedIn } = useAuth();
+    const { userLoggedIn, currentUser } = useAuth();
 
     // Change header background on scroll
     const handleScroll = () => {
@@ -65,7 +65,7 @@ export default function Header() {
 
                 {/* Authentication Buttons */}
                 {
-                    !userLoggedIn
+                    !userLoggedIn || (currentUser?.isAnonymous)
                         ?
                         <div className="flex space-x-4 absolute right-4">
                             <Link href="/login" className="px-4 py-2 text-sm text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition duration-300">

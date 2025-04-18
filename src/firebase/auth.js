@@ -9,16 +9,19 @@ import {
     sendPasswordResetEmail,
     updatePassword,
     sendEmailVerification,
-    EmailAuthProvider
+    EmailAuthProvider,
+    linkWithCredential,
+    linkWithPopup,
+    deleteUser
 } from "firebase/auth";
 
 export const doCreateUserWithEmailAndPassword = async (email, password) => {
     try {
         const user = auth.currentUser;
         if (user && user.isAnonymous) {
-            const userCredential = await user.linkWithCredential(
-                EmailAuthProvider.credential(email, password)
-            );
+            const userCredential = await linkWithCredential(user, EmailAuthProvider.credential(email, password));
+            localStorage.removeItem("repple-guest_uid");
+            localStorage.removeItem("repple-guest_creation_time");
             console.log("User linked:", userCredential.user);
             return userCredential.user;
         } else {
@@ -50,7 +53,9 @@ export const doSignInWithGoogle = async () => {
 
         let userCredential;
         if (user && user.isAnonymous) {
-            userCredential = await user.linkWithPopup(provider);
+            userCredential = await linkWithPopup(user, provider);
+            localStorage.removeItem("repple-guest_uid");
+            localStorage.removeItem("repple-guest_creation_time");
             console.log("User linked with Google:", userCredential.user);
         } else {
             userCredential = await signInWithPopup(auth, provider);
@@ -66,10 +71,73 @@ export const doSignInWithGoogle = async () => {
 };
 
 export const doSignInAnonymously = async () => {
+    if (auth && auth.currentUser && !auth.currentUser.isAnonymous) {
+        console.log("User is already signed in:", auth.currentUser);
+        return auth.currentUser;
+    }
+        
+    const expirationPeriodInMinutes = .1;
+    const periodInMilliseconds = expirationPeriodInMinutes * 60 * 1000;
+    console.log("Expiration period in milliseconds:", periodInMilliseconds);
+    let shouldCreateNewAccount = false;
     try {
-        const userCredential = await signInAnonymously(auth);
-        console.log("User signed in anonymously:", userCredential.user);
-        return userCredential.user;
+        const storedUid = localStorage.getItem("repple-guest_uid");
+        const storedCreationTime = localStorage.getItem("repple-guest_creation_time");
+
+        if (storedUid && storedCreationTime) {
+            const currentTime = new Date().getTime();
+            const accountAge = currentTime - parseInt(storedCreationTime);
+
+            // Check if the stored account has expired
+            if (accountAge > periodInMilliseconds) {
+                // Account expired, delete it
+                const user = auth.currentUser;
+                if (user && user.uid === storedUid) {
+                    try {
+                        await deleteUser(user); // Deletes the current anonymous account
+                        console.log("Guest account deleted due to expiration.");
+
+                        // Clear localStorage and create a new guest account
+                        localStorage.removeItem("repple-guest_uid");
+                        localStorage.removeItem("repple-guest_creation_time");
+                        shouldCreateNewAccount = true;
+                    } catch (error) {
+                        console.error("Error deleting user:", error);
+                        throw error;
+                    }
+                }
+            } else {
+                // Account is valid, reuse the existing anonymous account
+                const user = auth.currentUser;
+                if (user && user.uid === storedUid) {
+                    console.log("Reusing stored anonymous user:", user);
+                    return user;
+                } else {
+                    // Mismatch: localStorage UID doesn't match current user
+                    console.warn("Stored UID does not match current user. Clearing localStorage.");
+                    localStorage.removeItem("repple-guest_uid");
+                    localStorage.removeItem("repple-guest_creation_time");
+                    shouldCreateNewAccount = true;
+                }
+            }
+        } else {
+            // No stored account, create a new one
+            shouldCreateNewAccount = true;
+        }
+
+        // If we reach here, either the account is expired or doesn't exist, so create a new one
+        if (shouldCreateNewAccount) {
+            // Create a new anonymous account if no valid stored account
+            const userCredential = await signInAnonymously(auth);
+            const user = userCredential.user;
+            console.log("New anonymous user signed in:", user);
+
+            // Save the UID and creation time to local storage
+            localStorage.setItem("repple-guest_uid", user.uid);
+            localStorage.setItem("repple-guest_creation_time", new Date().getTime().toString());
+
+            return user;
+        }
     } catch (error) {
         console.error("Error signing in anonymously:", error);
         throw error;
