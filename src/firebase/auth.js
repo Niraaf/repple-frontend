@@ -76,7 +76,7 @@ export const doSignInAnonymously = async () => {
         return auth.currentUser;
     }
         
-    const expirationPeriodInMinutes = .1;
+    const expirationPeriodInMinutes = 1440;
     const periodInMilliseconds = expirationPeriodInMinutes * 60 * 1000;
     console.log("Expiration period in milliseconds:", periodInMilliseconds);
     let shouldCreateNewAccount = false;

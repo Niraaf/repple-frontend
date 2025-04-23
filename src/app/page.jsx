@@ -37,6 +37,8 @@ export default function Home() {
                     <p className="mt-4 text-lg">Signing in anonymously...</p>
                 }
             </div>
+
+
         </div>
     );
 }
