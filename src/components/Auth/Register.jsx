@@ -29,7 +29,7 @@ const Register = () => {
 
             try {
                 await doCreateUserWithEmailAndPassword(email, password);
-                window.location.href = "/";
+                //window.location.href = "/";
             } catch (err) {
                 setError(err.message);
             } finally {
@@ -44,7 +44,7 @@ const Register = () => {
             setIsRegistering(true);
             try {
                 await doSignInWithGoogle();
-                window.location.href = "/";
+                //window.location.href = "/";
             } catch (err) {
                 setError(err.message);
             } finally {

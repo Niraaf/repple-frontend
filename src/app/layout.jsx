@@ -3,7 +3,7 @@
 import "./globals.css";
 import { AuthProvider } from "@/contexts/authContext"; // Import AuthProvider
 import { BrowserRouter } from 'react-router-dom'; // Import BrowserRouter
-import Header from "@/components/header/Header";
+import Header from "@/components/Header/Header";
 
 export default function RootLayout({ children }) {
     return (

@@ -43,7 +43,7 @@ export default function Header() {
 
     return (
         <header
-            className={`fixed top-0 left-0 w-full p-4 z-50 transition-all duration-300 ease-in-out ${isScrolled ? "bg-white shadow-md" : "bg-transparent"
+            className={`fixed top-0 left-0 w-100 p-4 z-50 transition-all duration-300 ease-in-out ${isScrolled ? "bg-white shadow-md" : "bg-transparent"
                 }`}
         >
             <div className="container mx-auto flex justify-center items-center">
