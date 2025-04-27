@@ -7,7 +7,8 @@ import {
   closestCenter,
   PointerSensor,
   useSensor,
-  useSensors
+  useSensors,
+  TouchSensor
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -59,7 +60,8 @@ export default function WorkoutBuilder({ workoutId }) {
 
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } })
   );
 
   const getExerciseId = (exercise) => exercise.id || exercise.tempId;
@@ -178,7 +180,7 @@ export default function WorkoutBuilder({ workoutId }) {
 
           {/* Main Content */}
           {!loading && !error && (
-            <div className="flex flex-col items-center gap-8 w-full px-20 pt-20 max-w-7xl">
+            <div className="flex flex-col items-center gap-8 w-full px-10 md:px-30 lg:px-50 pt-20">
 
               {/* Workout Name */}
               <input
@@ -258,7 +260,7 @@ export default function WorkoutBuilder({ workoutId }) {
 
           {/* Sidebar */}
           <div
-            className={`fixed top-0 right-0 z-50 h-full w-150 bg-white shadow-2xl transform transition-transform ease-in-out duration-300 ${isSidebarOpen ? "translate-x-0" : "translate-x-full"
+            className={`fixed top-0 right-0 z-50 h-full w-90 lg:w-150 bg-white shadow-2xl transform transition-transform ease-in-out duration-300 ${isSidebarOpen ? "translate-x-0" : "translate-x-full"
               }`}
           >
             <ExerciseSidebar

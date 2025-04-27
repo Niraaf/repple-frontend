@@ -76,7 +76,7 @@ const ExerciseSidebar = ({ onAddExercise, addedExerciseIds }) => {
 
 
   return (
-    <div className="exercise-sidebar flex flex-col p-4 bg-gray-100 w-150 h-screen">
+    <div className="exercise-sidebar flex flex-col p-4 bg-gray-100 h-screen">
       {/* Search bar Section */}
       <div className="mb-4">
         <input
@@ -102,7 +102,7 @@ const ExerciseSidebar = ({ onAddExercise, addedExerciseIds }) => {
       </div>
 
       {/* Toggle Filter Dropdown Section */}
-      <div className="filter-buttons mb-4 flex justify-center gap-4 w-full">
+      <div className="filter-buttons mb-4 flex flex-wrap justify-center gap-4 w-full">
         {filterOptions.map((filter, index) => (
           <div key={filter.label} className="relative">
             <button
@@ -114,7 +114,7 @@ const ExerciseSidebar = ({ onAddExercise, addedExerciseIds }) => {
             {activeDropdown === filter.label && (
               <div
                 className={`absolute mt-2 bg-white border border-gray-300 rounded w-48 z-10 
-            ${index === filterOptions.length - 1 ? 'right-0' : 'left-0'}`}
+            ${index !== 0 ? 'right-0' : 'left-0'}`}
               >
                 {filter.options.map((option) => (
                   <button
