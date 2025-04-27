@@ -3,6 +3,7 @@ import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     signInWithPopup,
+    signInWithCredential,
     GoogleAuthProvider,
     signInAnonymously,
     signOut,
@@ -23,34 +24,37 @@ const saveUserToSupabase = async (user) => {
             .from("profile")
             .select()
             .eq("firebase_uid", user.uid)
-            .single();  // Expecting exactly one record
+            .single();
 
-        if (error && error.code === 'PGRST116') {  // Not found
-            // No user found, insert new
-            const { error: insertError } = await supabase
-                .from("profile")
-                .insert({ firebase_uid: user.uid, email: user.email });
-            if (insertError) {
-                console.error("Error inserting user:", insertError);
-                throw insertError;
-            } else {
-                console.log("New user saved to Supabase");
-            }
-        } else if (data) {
+        if (error && error.code !== 'PGRST116') {
+            // An actual error occurred that's NOT "No rows found"
+            console.error("Supabase select error:", error);
+            throw error;
+        }
+
+        if (data) {
             // User exists, update
             const { error: updateError } = await supabase
                 .from("profile")
                 .update({ firebase_uid: user.uid, email: user.email })
                 .eq("firebase_uid", user.uid);
+
             if (updateError) {
                 console.error("Error updating user:", updateError);
                 throw updateError;
-            } else {
-                console.log("User updated in Supabase");
             }
+            console.log("User updated in Supabase");
         } else {
-            console.error("Unexpected error:", error);
-            throw error;
+            // No user found, insert new
+            const { error: insertError } = await supabase
+                .from("profile")
+                .insert({ firebase_uid: user.uid, email: user.email });
+
+            if (insertError) {
+                console.error("Error inserting user:", insertError);
+                throw insertError;
+            }
+            console.log("New user saved to Supabase");
         }
     } catch (error) {
         console.error("Error during saveUserToSupabase:", error);
@@ -58,15 +62,23 @@ const saveUserToSupabase = async (user) => {
     }
 };
 
-// on auth state changed listener
-onAuthStateChanged(auth, async (user) => {
-    if (user) {
+const trySaveUserToSupabase = async () => {
+    const user = auth.currentUser;
+    if (user && user.uid) {
         try {
             await saveUserToSupabase(user);
         } catch (error) {
-            console.error("Error saving user in auth state changed:", error);
+            console.error("Failed to save user to Supabase:", error);
         }
-        // ...
+    }
+};
+
+
+// on auth state changed listener
+onAuthStateChanged(auth, async (user) => {
+    if (user) {
+        console.log("auth state changed");
+        await trySaveUserToSupabase();
     } else {
         // User is signed out
         // ...
@@ -82,8 +94,6 @@ export const doCreateUserWithEmailAndPassword = async (email, password) => {
                 user,
                 EmailAuthProvider.credential(email, password)
             );
-            localStorage.removeItem("repple-guest_uid");
-            localStorage.removeItem("repple-guest_creation_time");
             console.log("User linked:", userCredential.user);
             return userCredential.user;
         } else {
@@ -98,17 +108,6 @@ export const doCreateUserWithEmailAndPassword = async (email, password) => {
     } catch (error) {
         console.error("Error during email/password registration:", error);
         throw error;
-    } finally {
-        const user = auth.currentUser;
-        if (user && user.uid) {
-            // try to save user, if it fails, log the error.
-            try {
-                await saveUserToSupabase(user);
-            } catch (error) {
-                console.error("Failed to save user to Supabase:", error);
-            }
-        }
-
     }
 };
 
@@ -129,133 +128,137 @@ export const doSignInWithEmailAndPassword = async (email, password) => {
 
 export const doSignInWithGoogle = async () => {
     try {
-        const user = auth.currentUser;
         const provider = new GoogleAuthProvider();
-
-        let userCredential;
-        if (user && user.isAnonymous) {
-            userCredential = await linkWithPopup(user, provider);
-            localStorage.removeItem("repple-guest_uid");
-            localStorage.removeItem("repple-guest_creation_time");
-            console.log("User linked with Google:", userCredential.user);
-        } else {
-            userCredential = await signInWithPopup(auth, provider);
-            console.log(
-                "User signed in with Google:",
-                userCredential.user
-            );
-        }
-
+        const userCredential = await signInWithPopup(auth, provider);
+        console.log("User signed in with Google:", userCredential.user);
         return userCredential.user;
     } catch (error) {
         console.error("Error with Google sign-in:", error);
         throw error;
-    } finally {
-        const user = auth.currentUser;
-        if (user && user.uid) {
-            // try to save user, if it fails, log the error.
-            try {
-                await saveUserToSupabase(user);
-            } catch (error) {
-                console.error("Failed to save user to Supabase:", error);
+    }
+};
+
+export const handleGoogleAuthSmart = async () => {
+    const user = auth.currentUser;
+
+    if (user && user.isAnonymous) {
+        const provider = new GoogleAuthProvider();
+
+        try {
+            // Try linking guest to Google account
+            const userCredential = await linkWithPopup(user, provider);
+            console.log("Guest linked with Google:", userCredential.user);
+
+            return userCredential.user;
+
+        } catch (error) {
+            if (error.code === 'auth/credential-already-in-use') {
+                console.warn("Google account already linked. Using existing credential...");
+
+                const credential = GoogleAuthProvider.credentialFromError(error);
+
+                if (!credential) {
+                    console.error("Failed to extract credential from error.");
+                    throw error;
+                }
+
+                await handleDeleteUser(user);
+                
+                const existingUserCredential = await signInWithCredential(auth, credential);
+                console.log("Signed into existing Google account:", existingUserCredential.user);
+
+                return existingUserCredential.user;
+            } else {
+                console.error("Unexpected error during linking:", error);
+                throw error;
             }
         }
+    } else {
+        // Not a guest — regular sign in with popup
+        return await doSignInWithGoogle();
     }
 };
 
 export const doSignInAnonymously = async () => {
-    if (auth && auth.currentUser && !auth.currentUser.isAnonymous) {
+    if (auth?.currentUser && !auth.currentUser.isAnonymous) {
         console.log("User is already signed in:", auth.currentUser);
         return auth.currentUser;
     }
 
-    const expirationPeriodInMinutes = .02;//1440;
-    const periodInMilliseconds = expirationPeriodInMinutes * 60 * 1000;
-    console.log("Expiration period in milliseconds:", periodInMilliseconds);
-    let shouldCreateNewAccount = false;
+    const EXPIRATION_MS = 1440 * 60 * 1000;  // 1 day
+    const storedUid = localStorage.getItem("repple-guest_uid");
+    const storedCreationTime = localStorage.getItem("repple-guest_creation_time");
+
     try {
-        const storedUid = localStorage.getItem("repple-guest_uid");
-        const storedCreationTime = localStorage.getItem(
-            "repple-guest_creation_time"
-        );
-
         if (storedUid && storedCreationTime) {
-            const currentTime = new Date().getTime();
-            const accountAge = currentTime - parseInt(storedCreationTime);
+            const accountAge = Date.now() - parseInt(storedCreationTime);
+            const user = auth.currentUser;
 
-            // Check if the stored account has expired
-            if (accountAge > periodInMilliseconds) {
-                // Account expired, delete it
-                const user = auth.currentUser;
-                if (user && user.uid === storedUid) {
-                    try {
-                        const { error: deleteError } = await supabase
-                            .from("profile")
-                            .delete()
-                            .eq("firebase_uid", user.uid);
-                        if (deleteError) {
-                            console.error(
-                                "Error deleting user from Supabase:",
-                                deleteError
-                            );
-                        } else console.log("User deleted from supabase");
-                        await deleteUser(user); // Deletes the current anonymous account
-                        console.log("Guest account deleted due to expiration.");
-
-                        // Clear localStorage and create a new guest account
-                        localStorage.removeItem("repple-guest_uid");
-                        localStorage.removeItem("repple-guest_creation_time");
-                        shouldCreateNewAccount = true;
-                    } catch (error) {
-                        console.error("Error deleting user:", error);
-                    }
-                }
-            } else {
-                // Account is valid, reuse the existing anonymous account
-                const user = auth.currentUser;
-                if (user && user.uid === storedUid) {
-                    console.log("Reusing stored anonymous user:", user);
-                    return user;
-                } else {
-                    // Mismatch: localStorage UID doesn't match current user
-                    console.warn(
-                        "Stored UID does not match current user. Clearing localStorage."
-                    );
-                    localStorage.removeItem("repple-guest_uid");
-                    localStorage.removeItem("repple-guest_creation_time");
-                    shouldCreateNewAccount = true;
-                }
+            if (accountAge > EXPIRATION_MS) {
+                console.warn("Guest account expired.");
+                await handleDeleteUser(user);
+                return await createNewAnonymousUser();
             }
-        } else {
-            // No stored account, create a new one
-            shouldCreateNewAccount = true;
+
+            if (user && user.uid === storedUid) {
+                console.log("Reusing stored anonymous user:", user);
+                return user;
+            }
+
+            console.warn("UID mismatch. Clearing localStorage.");
+            clearGuestStorage();
+            return await createNewAnonymousUser();
         }
 
-        // If we reach here, either the account is expired or doesn't exist, so create a new one
-        if (shouldCreateNewAccount) {
-            // Create a new anonymous account if no valid stored account
-            const userCredential = await signInAnonymously(auth);
+        // No stored guest account
+        return await createNewAnonymousUser();
 
-            // Save the UID and creation time to local storage
-            localStorage.setItem(
-                "repple-guest_uid",
-                userCredential.user.uid
-            );
-            localStorage.setItem(
-                "repple-guest_creation_time",
-                new Date().getTime().toString()
-            );
-            await saveUserToSupabase(userCredential.user);
-            console.log(
-                "New anonymous user signed in:",
-                userCredential.user
-            );
-            return userCredential.user;
-        }
     } catch (error) {
-        console.error("Error signing in anonymously:", error);
+        console.error("Error during anonymous sign-in:", error);
         throw error;
     }
+};
+
+const handleDeleteUser = async (user) => {
+    console.log("deleting user ", user.uid);
+    if (!user) {
+        console.warn("No user provided for deletion.");
+        return;
+    }
+
+    try {
+        const { error: deleteError } = await supabase
+            .from("profile")
+            .delete()
+            .eq("firebase_uid", user.uid);
+
+        if (deleteError) {
+            console.error("Error deleting user from Supabase:", deleteError);
+        } else {
+            console.log("User deleted from Supabase");
+        }
+
+        await deleteUser(user);
+        console.log("Firebase user deleted.");
+    } catch (err) {
+        console.error("Error deleting Firebase user:", err);
+    }
+
+    clearGuestStorage();
+};
+
+
+const createNewAnonymousUser = async () => {
+    const userCredential = await signInAnonymously(auth);
+    localStorage.setItem("repple-guest_uid", userCredential.user.uid);
+    localStorage.setItem("repple-guest_creation_time", Date.now().toString());
+    console.log("New anonymous user signed in:", userCredential.user);
+    return userCredential.user;
+};
+
+const clearGuestStorage = () => {
+    localStorage.removeItem("repple-guest_uid");
+    localStorage.removeItem("repple-guest_creation_time");
 };
 
 export const doSignOut = async () => {

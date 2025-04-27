@@ -1,11 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ExerciseListItem from '../ExerciseListItem/ExerciseListItem';
-import exerciseLibrary from '@/data/exerciseLibrary';
 
 const ExerciseSidebar = ({ onAddExercise, addedExerciseIds }) => {
   const [filters, setFilters] = useState({});
+  const [filterOptionsData, setFilterOptionsData] = useState({
+    muscleGroups: [],
+    equipment: [],
+    exerciseTypes: [],
+    focus: []
+  });
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [exerciseLibrary, setExerciseLibrary] = useState([]);
 
   const handleFilterChange = (category, value) => {
     setFilters((prevFilters) => ({
@@ -23,16 +29,11 @@ const ExerciseSidebar = ({ onAddExercise, addedExerciseIds }) => {
     setActiveDropdown((prev) => (prev === filterLabel ? null : filterLabel));
   };
 
-  const muscleGroups = ['Chest', 'Back', 'Legs', 'Shoulders', 'Arms', 'Abs'];
-  const equipment = ['Barbell', 'Dumbbell', 'Kettlebell', 'Machine', 'Bodyweight'];
-  const exerciseTypes = ['Compound', 'Isolation', 'Cardio'];
-  const focus = ['Strength', 'Hypertrophy', 'Endurance'];
-
   const filterOptions = [
-    { label: 'Muscle Group', options: muscleGroups },
-    { label: 'Equipment', options: equipment },
-    { label: 'Exercise Type', options: exerciseTypes },
-    { label: 'Focus', options: focus },
+    { label: 'Muscle Group', options: filterOptionsData.muscleGroups },
+    { label: 'Equipment', options: filterOptionsData.equipment },
+    { label: 'Exercise Type', options: filterOptionsData.exerciseTypes },
+    { label: 'Focus', options: filterOptionsData.focus },
   ];
 
   // Apply filters + search
@@ -40,7 +41,6 @@ const ExerciseSidebar = ({ onAddExercise, addedExerciseIds }) => {
     return Object.entries(filters).every(([category, value]) => {
       if (!value) return true;
 
-      // Map category labels to object keys
       const keyMap = {
         'Muscle Group': 'muscleGroup',
         'Equipment': 'equipment',
@@ -49,9 +49,30 @@ const ExerciseSidebar = ({ onAddExercise, addedExerciseIds }) => {
       };
 
       const exKey = keyMap[category];
-      return ex[exKey] === value;
+      return ex[exKey]?.toLowerCase() === value.toLowerCase();
     }) && ex.name.toLowerCase().includes(searchQuery.toLowerCase());
   });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [exerciseRes, filterRes] = await Promise.all([
+          fetch('/api/exercises/all'),
+          fetch('/api/exercises/filters')
+        ]);
+
+        const exerciseData = await exerciseRes.json();
+        const filtersData = await filterRes.json();
+
+        setExerciseLibrary(exerciseData);
+        setFilterOptionsData(filtersData);
+      } catch (err) {
+        console.error("Failed to fetch data:", err);
+      }
+    };
+
+    fetchData();
+  }, []);
 
 
   return (

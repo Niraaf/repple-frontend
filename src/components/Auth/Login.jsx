@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from "react";
-import { doSignInWithEmailAndPassword, doSignInWithGoogle, doSignInAnonymously } from "@/firebase/auth";
+import { doSignInWithEmailAndPassword, handleGoogleAuthSmart } from "@/firebase/auth";
 import { useAuth } from "@/contexts/authContext";
 import Link from "next/link";
 
 const Login = () => {
-    const { userLoggedIn } = useAuth();
+    const { currentUser, userLoggedIn } = useAuth();
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -31,41 +31,19 @@ const Login = () => {
         }
     };
 
-    const onGoogleSignIn = async (e) => {
+    const onGoogleAuthClick = async (e) => {
         e.preventDefault();
         if (!isSigningIn) {
             setIsSigningIn(true);
-            await doSignInWithGoogle()
-                .then(() => {
-                    window.location.href = "/";
-                })
-                .catch((err) => {
-                    setError(err.message);
-                })
-                .finally(() => {
-                    setIsSigningIn(false);
-                });
+            await handleGoogleAuthSmart()
+                //.then(() => window.location.href = "/")
+                .catch((err) => setError(err.message))
+                .finally(() => setIsSigningIn(false));
         }
-    };
+    };    
+    
 
-    const onGuestSignIn = async (e) => {
-        e.preventDefault();
-        if (!isSigningIn) {
-            setIsSigningIn(true);
-            await doSignInAnonymously()
-                .then(() => {
-                    window.location.href = "/";
-                })
-                .catch((err) => {
-                    setError(err.message);
-                })
-                .finally(() => {
-                    setIsSigningIn(false);
-                });
-        }
-    };
-
-    if (userLoggedIn) {
+    if (currentUser && !currentUser.isAnonymous && userLoggedIn) {
         return (
             <div className="flex justify-center items-center min-h-screen">
                 <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
@@ -115,19 +93,11 @@ const Login = () => {
                 </form>
 
                 <button
-                    onClick={onGoogleSignIn}
+                    onClick={onGoogleAuthClick}
                     disabled={isSigningIn}
                     className="w-full py-2 mt-4 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:bg-gray-300"
                 >
                     {isSigningIn ? "Signing In with Google..." : "Sign In with Google"}
-                </button>
-
-                <button
-                    onClick={onGuestSignIn}
-                    disabled={isSigningIn}
-                    className="w-full py-2 mt-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600 disabled:bg-gray-300"
-                >
-                    {isSigningIn ? "Continuing as Guest..." : "Continue as Guest"}
                 </button>
 
                 <div className="mt-4 text-center text-sm text-gray-600">
