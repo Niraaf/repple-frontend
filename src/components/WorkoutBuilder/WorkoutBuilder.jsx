@@ -19,6 +19,7 @@ import {
 import { useAuth } from "@/contexts/authContext";
 import { v4 as uuidv4 } from 'uuid';
 import ExerciseCard from "../ExerciseCard/ExerciseCard";
+import RestBlock from "../RestBlock/RestBlock";
 
 export default function WorkoutBuilder({ workoutId }) {
   const [loading, setLoading] = useState(true);
@@ -137,104 +138,138 @@ export default function WorkoutBuilder({ workoutId }) {
   const handleExerciseChange = (index, field, value) => {
     setExercises(prev => {
       const updated = [...prev];
-      updated[index][field] = Number(value);  // Ensure number type
+
+      // Convert to integer, remove decimals, and handle empty input gracefully
+      let numericValue = parseInt(value, 10);
+
+      // If value is NaN (like empty string), default to 0
+      if (isNaN(numericValue)) numericValue = 0;
+
+      // Clamp between 0 and 999
+      numericValue = Math.max(0, Math.min(numericValue, 999));
+
+      updated[index][field] = numericValue;
       return updated;
     });
   };
 
 
+
   return (
-    <div className="min-h-screen relative p-6">
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragEnd={handleDragEnd}
+    >
+      <SortableContext
+        items={exercises.map(getExerciseId)}
+        strategy={rectSortingStrategy}
       >
-        <SortableContext
-          items={exercises.map(getExerciseId)}
-          strategy={rectSortingStrategy}
-        >
-          <div className="flex flex-col items-center justify-center w-full min-h-screen gap-8">
+        <div className="flex flex-col items-center justify-center w-full min-h-screen gap-8">
 
-            {/* Loading & Error States */}
-            {loading && (
-              <p className="text-lg text-gray-500 animate-pulse mt-10">Loading your workout...</p>
-            )}
+          {/* Loading & Error States */}
+          {loading && (
+            <p className="text-lg text-gray-500 animate-pulse mt-10">Loading your workout...</p>
+          )}
 
-            {error && (
-              <p className="text-red-500 text-lg mt-10">Oops! Failed to load workout. Please try again.</p>
-            )}
+          {error && (
+            <p className="text-red-500 text-lg mt-10">Oops! Failed to load workout. Please try again.</p>
+          )}
 
-            {/* Main Content */}
-            {!loading && !error && (
-              <div className="flex flex-col items-center gap-8 w-full max-w-6xl">
+          {/* Main Content */}
+          {!loading && !error && (
+            <div className="flex flex-col items-center gap-8 w-full px-20 pt-20 max-w-7xl">
 
-                {/* Workout Name */}
-                <input
-                  type="text"
-                  value={workoutName}
-                  onChange={(e) => setWorkoutName(e.target.value)}
-                  placeholder="Untitled Workout"
-                  className="text-4xl font-bold text-center bg-transparent border-b-2 border-gray-300 focus:border-blue-400 focus:outline-none transition w-full max-w-xl"
-                />
+              {/* Workout Name */}
+              <input
+                type="text"
+                value={workoutName}
+                onChange={(e) => setWorkoutName(e.target.value)}
+                placeholder="Untitled Workout"
+                className="text-4xl font-bold text-center bg-transparent border-b-2 border-gray-300 focus:border-blue-400 focus:outline-none transition w-full max-w-xl"
+              />
 
-                {/* Exercise Cards */}
-                <ul className="flex flex-wrap gap-6 p-6 bg-white border border-gray-200 rounded-xl shadow-md w-full justify-center min-h-[150px]">
-                  {exercises.length === 0 ? (
-                    <p className="text-gray-400 text-center">No exercises yet. Click "Add Exercise" to start building!</p>
-                  ) : (
-                    exercises.map((ex, idx) => (
+              {/* Exercise Cards */}
+              <ul className="flex flex-wrap gap-4 p-6 bg-white border border-gray-200 rounded-xl shadow-md relative">
+                {/* 🚀 START Block */}
+                {exercises.length > 0 && (
+                  <div className="flex items-center gap-2 px-5 py-2 h-40 text-center my-auto bg-gradient-to-r from-green-300 to-green-100 text-green-900 font-bold rounded-full shadow-md text-sm animate-pulse">
+                    S<br />T<br />A<br />R<br />T
+                  </div>
+                )}
+
+                {exercises.length === 0 ? (
+                  <p className="text-gray-400 text-center w-full col-span-6">No exercises yet. Add some!</p>
+                ) : (
+                  exercises.map((ex, idx) => (
+                    <React.Fragment key={getExerciseId(ex)}>
+                      {/* Exercise Card */}
                       <ExerciseCard
-                        key={ex.id || ex.tempId}
                         ex={ex}
                         onChange={(field, value) => handleExerciseChange(idx, field, value)}
                       />
-                    ))
-                  )}
-                </ul>
 
-                {/* Action Buttons */}
-                <div className="flex gap-5">
-                  <button
-                    onClick={handleOpenSidebar}
-                    className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg shadow transition"
-                  >
-                    ➕ Add Exercise
-                  </button>
+                      {/* Rest Block */}
+                      {idx < exercises.length - 1 && (
+                        <RestBlock
+                          value={ex.rest_seconds_planned}
+                          onChange={(newValue) => handleExerciseChange(idx, 'rest_seconds_planned', newValue)}
+                        />
+                      )}
+                    </React.Fragment>
+                  ))
+                )}
 
-                  <button
-                    onClick={handleSaveWorkout}
-                    className="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg shadow transition"
-                  >
-                    💾 Save Workout
-                  </button>
-                </div>
+                {/* 🏁 FINISH Block */}
+                {exercises.length > 0 && (
+                  <div className="flex items-center gap-2 px-5 py-2 h-40 text-center my-auto bg-gradient-to-r from-blue-300 to-blue-100 text-blue-900 font-bold rounded-full shadow-md text-sm animate-pulse">
+                    F<br />I<br />N<br />I<br />S<br />H
+                  </div>
+                )}
+              </ul>
+
+
+              {/* Action Buttons */}
+              <div className="flex gap-5">
+                <button
+                  onClick={handleOpenSidebar}
+                  className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg shadow transition"
+                >
+                  ➕ Add Exercise
+                </button>
+
+                <button
+                  onClick={handleSaveWorkout}
+                  className="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg shadow transition"
+                >
+                  💾 Save Workout
+                </button>
               </div>
-            )}
-
-            {/* Sidebar Overlay */}
-            {isSidebarOpen && (
-              <div
-                className="fixed inset-0 bg-black/40 z-40 backdrop-blur-sm cursor-pointer"
-                onClick={handleOpenSidebar}
-              />
-            )}
-
-            {/* Sidebar */}
-            <div
-              className={`fixed top-0 right-0 z-50 h-full w-150 bg-white shadow-2xl transform transition-transform ease-in-out duration-300 ${isSidebarOpen ? "translate-x-0" : "translate-x-full"
-                }`}
-            >
-              <ExerciseSidebar
-                onAddExercise={handleAddExercise}
-                addedExerciseIds={exercises.map((ex) => ex.exercise_definition_id)}
-              />
             </div>
+          )}
 
+          {/* Sidebar Overlay */}
+          {isSidebarOpen && (
+            <div
+              className="fixed inset-0 bg-black/40 z-40 backdrop-blur-sm cursor-pointer"
+              onClick={handleOpenSidebar}
+            />
+          )}
+
+          {/* Sidebar */}
+          <div
+            className={`fixed top-0 right-0 z-50 h-full w-150 bg-white shadow-2xl transform transition-transform ease-in-out duration-300 ${isSidebarOpen ? "translate-x-0" : "translate-x-full"
+              }`}
+          >
+            <ExerciseSidebar
+              onAddExercise={handleAddExercise}
+              addedExerciseIds={exercises.map((ex) => ex.exercise_definition_id)}
+            />
           </div>
-        </SortableContext>
-      </DndContext>
-    </div>
+
+        </div>
+      </SortableContext>
+    </DndContext>
   );
 
 }
