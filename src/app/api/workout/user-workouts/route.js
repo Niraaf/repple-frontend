@@ -10,7 +10,7 @@ export async function GET(req) {
 
     const { data, error } = await supabase
         .from('workouts')
-        .select('id, name, created_at')
+        .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 

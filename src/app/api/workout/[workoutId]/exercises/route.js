@@ -5,10 +5,9 @@ export async function GET(req, context) {
     const { workoutId } = params;
 
     try {
-        // 1️⃣ Fetch workout name
         const { data: workoutData, error: workoutError } = await supabase
             .from('workouts')
-            .select('name')
+            .select('*')
             .eq('id', workoutId)
             .single();
 
@@ -21,20 +20,15 @@ export async function GET(req, context) {
         const { data: exercisesData, error: exercisesError } = await supabase
             .from('workout_exercises')
             .select(`
-                id,
-                workout_id,
-                name,
-                sets,
-                reps,
-                rest_seconds_planned,
-                sequence,
-                exercise_definition_id,
+                *,
                 exercise_definitions (
                     is_custom,
-                    muscle_groups ( name ),
                     exercise_types ( name ),
                     focus_categories ( name ),
-                    equipment ( name )
+                    equipment ( name ),
+                    exercise_muscle_groups (
+                        muscle_groups ( name )
+                    )
                 )
             `)
             .eq('workout_id', workoutId)
@@ -52,10 +46,13 @@ export async function GET(req, context) {
             name: ex.name,
             sets: ex.sets,
             reps: ex.reps,
-            rest_seconds_planned: ex.rest_seconds_planned,
             sequence: ex.sequence,
             exercise_definition_id: ex.exercise_definition_id,
-            muscle_group: ex.exercise_definitions.muscle_groups.name,
+            rest_between_exercise: ex.rest_between_exercise,
+            rest_between_sets: ex.rest_between_sets,
+            muscle_groups: ex.exercise_definitions.exercise_muscle_groups
+                .map(mg => mg.muscle_groups.name)
+                .sort(),
             type: ex.exercise_definitions.exercise_types.name,
             focus: ex.exercise_definitions.focus_categories.name,
             equipment: ex.exercise_definitions.equipment.name,
@@ -64,7 +61,10 @@ export async function GET(req, context) {
 
         // 4️⃣ Return combined response
         return new Response(JSON.stringify({
-            workoutName: workoutData.name,
+            workout_name: workoutData.name,
+            num_exercises: workoutData.num_exercises,
+            estimated_duration: workoutData.estimated_duration,
+            last_performed: workoutData.last_performed,
             exercises: formattedExercises
         }), {
             status: 200,

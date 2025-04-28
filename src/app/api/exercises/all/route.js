@@ -7,10 +7,12 @@ export async function GET() {
             id,
             name,
             is_custom,
-            muscle_groups ( name ),
             equipment ( name ),
             exercise_types ( name ),
-            focus_categories ( name )
+            focus_categories ( name ),
+            exercise_muscle_groups (
+            muscle_groups ( name )
+            )
         `);
 
     if (error) {
@@ -25,10 +27,10 @@ export async function GET() {
         id: ex.id,
         name: ex.name,
         is_custom: ex.is_custom,
-        muscle_group: ex.muscle_groups.name,
-        equipment: ex.equipment.name,
-        type: ex.exercise_types.name,
-        focus: ex.focus_categories.name
+        muscle_groups: ex.exercise_muscle_groups?.map(mg => mg.muscle_groups.name) || [],
+        equipment: ex.equipment?.name || null,
+        type: ex.exercise_types?.name || null,
+        focus: ex.focus_categories?.name || null
     }));
 
     return new Response(JSON.stringify(formattedData), {

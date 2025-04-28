@@ -1,5 +1,27 @@
 import { supabase } from "@/supabase/supabase";
 
+function calculateEstimatedDuration(exercises) {
+    let totalSeconds = 0;
+    const avgSecondsPerRep = 4;
+
+    exercises.forEach((ex, idx) => {
+        const sets = ex.sets;
+        const reps = ex.reps;
+        const timePerSet = reps * avgSecondsPerRep;
+
+        totalSeconds += sets * timePerSet;
+        totalSeconds += (sets - 1) * ex.rest_between_sets;
+
+        if (idx < exercises.length - 1) {
+            totalSeconds += ex.rest_between_exercise;
+        }
+    });
+
+    return Math.ceil(totalSeconds / 60);
+}
+
+
+
 export async function POST(req, context) {
     const params = await context.params;
     const { workoutId } = params;
@@ -12,16 +34,18 @@ export async function POST(req, context) {
             return new Response(JSON.stringify({ message: "Invalid exercises format" }), { status: 400 });
         }
 
-        if (workoutName) {
-            const { error: nameError } = await supabase
-                .from('workouts')
-                .update({ name: workoutName })
-                .eq('id', workoutId);
+        const { error: nameError } = await supabase
+            .from('workouts')
+            .update({
+                name: workoutName || "Untitled Workout",
+                num_exercises: exercises.length,
+                estimated_duration: calculateEstimatedDuration(exercises)
+                })
+            .eq('id', workoutId);
 
-            if (nameError) {
-                console.error("Failed to update workout name:", nameError);
-                return new Response(JSON.stringify({ message: "Failed to update workout name" }), { status: 500 });
-            }
+        if (nameError) {
+            console.error("Failed to update workout name:", nameError);
+            return new Response(JSON.stringify({ message: "Failed to update workout name" }), { status: 500 });
         }
 
         // 1️⃣ Delete existing exercises
@@ -45,9 +69,10 @@ export async function POST(req, context) {
             name: ex.name,
             sets: ex.sets,
             reps: ex.reps,
-            rest_seconds_planned: ex.rest_seconds_planned,
             sequence: idx,
-            exercise_definition_id: ex.exercise_definition_id
+            exercise_definition_id: ex.exercise_definition_id,
+            rest_between_exercise: ex.rest_between_exercise,
+            rest_between_sets: ex.rest_between_sets
         }));
 
         const { error: insertError } = await supabase

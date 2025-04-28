@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import ExerciseSidebar from "../ExerciseSidebar/ExerciseSidebar";
+import ExerciseModal from "../ExerciseModal/ExerciseModal";
 import {
   DndContext,
   closestCenter,
@@ -27,8 +27,9 @@ export default function WorkoutBuilder({ workoutId }) {
   const [error, setError] = useState(false);
   const { currentUser } = useAuth();
   const [exercises, setExercises] = useState([]);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [workoutName, setWorkoutName] = useState("Untitled Workout");
+  const [saving, setSaving] = useState(false);
 
   // Load existing workout only if workoutId exists (Edit Mode)
   useEffect(() => {
@@ -42,7 +43,7 @@ export default function WorkoutBuilder({ workoutId }) {
 
         const data = await res.json();
         setExercises(data.exercises);
-        setWorkoutName(data.workoutName);
+        setWorkoutName(data.workout_name);
       } catch (err) {
         console.error("Error fetching exercises:", err);
         setError(true);
@@ -85,9 +86,10 @@ export default function WorkoutBuilder({ workoutId }) {
         name: exercise.name,
         sets: 3,
         reps: 10,
-        rest_seconds_planned: 120,
+        rest_between_sets: 120,
+        rest_between_exercise: 180,
         exercise_definition_id: exercise.id,
-        muscle_group: exercise.muscle_group,
+        muscle_groups: exercise.muscle_groups,
         type: exercise.type,
         focus: exercise.focus,
         equipment: exercise.equipment,
@@ -96,15 +98,18 @@ export default function WorkoutBuilder({ workoutId }) {
     ]);
   };
 
+  const handleDeleteExercise = (id) => {
+    setExercises((prev) => prev.filter((ex) => (ex.id || ex.tempId) !== id));
+  };
 
-  const handleOpenSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
+  const handleOpenModal = () => {
+    setIsModalOpen(!isModalOpen);
   };
 
   // 🔥 Save Workout Button Handler
   const handleSaveWorkout = async () => {
-    if (!currentUser) return;
-
+    if (!currentUser || saving) return;
+    setSaving(true);
     try {
       let savedWorkoutId = workoutId;
 
@@ -134,6 +139,9 @@ export default function WorkoutBuilder({ workoutId }) {
     } catch (err) {
       console.error("Failed to save workout:", err);
       alert("Error saving workout.");
+    } finally {
+      setSaving(false);
+      window.location.href = `/workouts/${workoutId}`
     }
   };
 
@@ -141,20 +149,17 @@ export default function WorkoutBuilder({ workoutId }) {
     setExercises(prev => {
       const updated = [...prev];
 
-      // Convert to integer, remove decimals, and handle empty input gracefully
-      let numericValue = parseInt(value, 10);
+      // Remove leading zeros & parse number
+      let numericValue = parseInt(value.replace(/^0+/, ''), 10);
 
-      // If value is NaN (like empty string), default to 0
+      // Handle NaN edge case + clamp to range
       if (isNaN(numericValue)) numericValue = 0;
-
-      // Clamp between 0 and 999
-      numericValue = Math.max(0, Math.min(numericValue, 999));
+      numericValue = Math.min(numericValue, 999);
 
       updated[index][field] = numericValue;
       return updated;
     });
   };
-
 
 
   return (
@@ -167,111 +172,90 @@ export default function WorkoutBuilder({ workoutId }) {
         items={exercises.map(getExerciseId)}
         strategy={rectSortingStrategy}
       >
-        <div className="flex flex-col items-center justify-center w-full min-h-screen gap-8">
+        <div className="flex flex-col items-center w-full min-h-screen pt-30">
 
-          {/* Loading & Error States */}
-          {loading && (
-            <p className="text-lg text-gray-500 animate-pulse mt-10">Loading your workout...</p>
-          )}
-
-          {error && (
-            <p className="text-red-500 text-lg mt-10">Oops! Failed to load workout. Please try again.</p>
-          )}
-
-          {/* Main Content */}
+          {/* Header */}
           {!loading && !error && (
-            <div className="flex flex-col items-center gap-8 w-full px-10 md:px-30 lg:px-50 pt-20">
-
-              {/* Workout Name */}
+            <div className="w-full max-w-3xl px-6 mb-2">
               <input
                 type="text"
                 value={workoutName}
                 onChange={(e) => setWorkoutName(e.target.value)}
-                placeholder="Untitled Workout"
-                className="text-4xl font-bold text-center bg-transparent border-b-2 border-gray-300 focus:border-blue-400 focus:outline-none transition w-full max-w-xl"
+                placeholder="Name your workout..."
+                className="text-5xl font-extrabold tracking-tight text-gray-800 bg-transparent text-center focus:outline-none placeholder-gray-300 w-full"
               />
+            </div>
+          )}
 
-              {/* Exercise Cards */}
-              <ul className="flex flex-wrap gap-4 p-6 bg-white border border-gray-200 rounded-xl shadow-md relative">
-                {/* 🚀 START Block */}
-                {exercises.length > 0 && (
-                  <div className="flex items-center gap-2 px-5 py-2 h-40 text-center my-auto bg-gradient-to-r from-green-300 to-green-100 text-green-900 font-bold rounded-full shadow-md text-sm animate-pulse">
-                    S<br />T<br />A<br />R<br />T
-                  </div>
-                )}
+          {/* Action Buttons - Clean & Centered */}
+          {!loading && !error && (
+            <div className="flex justify-center gap-4 mb-5">
+              <button
+                onClick={handleOpenModal}
+                className="flex items-center gap-2 px-5 py-2 border border-gray-300 rounded-full hover:bg-gray-100 transition text-sm shadow-sm"
+              >
+                ➕ Add Exercise
+              </button>
+              <button
+                onClick={handleSaveWorkout}
+                className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-semibold transition ${saving ? "bg-green-300 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"
+                  } text-white shadow-md`}
+                disabled={saving}
+              >
+                💾 Save Workout
+              </button>
+            </div>
+          )}
 
+          {/* States */}
+          {loading && <p className="text-gray-400 animate-pulse">Loading your quest...</p>}
+          {error && <p className="text-red-500">Failed to load. Try again, hero!</p>}
+
+          {/* Main Content */}
+          {!loading && !error && (
+            <div className="flex flex-col items-center gap-10 w-full max-w-5xl">
+
+              {/* Exercise Flow */}
+              <div className="flex flex-wrap justify-center gap-6 p-6 rounded-2xl bg-white w-full">
+
+                {/* Modern Cards */}
                 {exercises.length === 0 ? (
-                  <p className="text-gray-400 text-center w-full col-span-6">No exercises yet. Add some!</p>
+                  <p className="text-gray-300 italic">No tasks yet... click "Add Task" to begin your quest.</p>
                 ) : (
                   exercises.map((ex, idx) => (
                     <React.Fragment key={getExerciseId(ex)}>
-                      {/* Exercise Card */}
                       <ExerciseCard
                         ex={ex}
+                        index={idx}
                         onChange={(field, value) => handleExerciseChange(idx, field, value)}
+                        onDelete={handleDeleteExercise}
                       />
-
-                      {/* Rest Block */}
                       {idx < exercises.length - 1 && (
                         <RestBlock
-                          value={ex.rest_seconds_planned}
-                          onChange={(newValue) => handleExerciseChange(idx, 'rest_seconds_planned', newValue)}
+                          value={ex.rest_between_exercise}
+                          onChange={(newValue) => handleExerciseChange(idx, 'rest_between_exercise', newValue)}
                         />
                       )}
                     </React.Fragment>
                   ))
                 )}
-
-                {/* 🏁 FINISH Block */}
-                {exercises.length > 0 && (
-                  <div className="flex items-center gap-2 px-5 py-2 h-40 text-center my-auto bg-gradient-to-r from-blue-300 to-blue-100 text-blue-900 font-bold rounded-full shadow-md text-sm animate-pulse">
-                    F<br />I<br />N<br />I<br />S<br />H
-                  </div>
-                )}
-              </ul>
-
-
-              {/* Action Buttons */}
-              <div className="flex gap-5">
-                <button
-                  onClick={handleOpenSidebar}
-                  className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg shadow transition"
-                >
-                  ➕ Add Exercise
-                </button>
-
-                <button
-                  onClick={handleSaveWorkout}
-                  className="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg shadow transition"
-                >
-                  💾 Save Workout
-                </button>
               </div>
             </div>
           )}
 
-          {/* Sidebar Overlay */}
-          {isSidebarOpen && (
-            <div
-              className="fixed inset-0 bg-black/40 z-40 backdrop-blur-sm cursor-pointer"
-              onClick={handleOpenSidebar}
-            />
-          )}
-
-          {/* Sidebar */}
-          <div
-            className={`fixed top-0 right-0 z-50 h-full w-90 lg:w-150 bg-white shadow-2xl transform transition-transform ease-in-out duration-300 ${isSidebarOpen ? "translate-x-0" : "translate-x-full"
-              }`}
-          >
-            <ExerciseSidebar
+          {isModalOpen && (
+            <ExerciseModal
+              onClose={handleOpenModal}
               onAddExercise={handleAddExercise}
               addedExerciseIds={exercises.map((ex) => ex.exercise_definition_id)}
             />
-          </div>
+          )}
 
         </div>
       </SortableContext>
     </DndContext>
   );
+
+
 
 }
