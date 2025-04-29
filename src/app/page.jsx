@@ -29,7 +29,7 @@ export default function Home() {
 
     return (
         <div>
-            <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+            <div className="flex flex-col items-center justify-center min-h-screen">
                 <h1 className="text-2xl font-bold">Hello there!</h1>
                 {currentUser ?
                     <p className="mt-4 text-lg">UID: {currentUser.uid}</p>

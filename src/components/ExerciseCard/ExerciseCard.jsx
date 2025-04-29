@@ -8,9 +8,10 @@ export default function ExerciseCard({ ex, index, onChange, onDelete }) {
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
-        boxShadow: isDragging ? "0 4px 12px rgba(0,0,0,0.1)" : "0 1px 4px rgba(0,0,0,0.05)",
+        boxShadow: isDragging ? "var(--shadow-lg)" : "var(--shadow-md)",
         border: "1px solid #e5e7eb",
-        zIndex: isDragging ? "45" : ""
+        zIndex: isDragging ? "45" : "",
+        backgroundColor: isDragging ? "rgba(255, 255, 255, 0.5)" : ""
     };
 
     return (
@@ -19,7 +20,7 @@ export default function ExerciseCard({ ex, index, onChange, onDelete }) {
             style={style}
             {...attributes}
             {...listeners}
-            className="w-50 h-50 rounded-xl p-3 flex flex-col justify-between cursor-grab active:cursor-grabbing bg-white/70 backdrop-blur-md"
+            className="w-50 h-50 rounded-xl p-3 flex flex-col justify-between cursor-grab active:cursor-grabbing bg-white/30 backdrop-blur-md relative"
         >
             {/* Position Badge */}
             <div className="absolute -top-2 -left-2 bg-purple-200 text-purple-700 w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold shadow-sm">

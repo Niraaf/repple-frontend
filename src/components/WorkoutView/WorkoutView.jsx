@@ -86,7 +86,7 @@ export default function WorkoutView({ workoutId }) {
             {loading && <p className="text-gray-400 animate-pulse">Loading your workout details...</p>}
 
             {!loading &&
-                <div className="flex flex-col w-full h-full max-w-5xl px-10">
+                <div className="flex flex-col w-full h-full max-w-5xl">
                     {/* 🏷️ Quest Header */}
                     <div className="mb-8 text-center">
                         <h1 className="text-5xl font-extrabold tracking-tight text-gray-800">
@@ -98,15 +98,17 @@ export default function WorkoutView({ workoutId }) {
                     </div>
 
                     {/* 🎮 Action Buttons */}
-                    <div className="flex justify-between items-center mb-8 flex-wrap gap-4">
+                    <div className="flex justify-between items-center mb-8 flex-wrap gap-2">
                         {/* Left: Start Button */}
                         <div>
-                            <button
-                                onClick={handleStart}
-                                className="bg-white/70 flex items-center gap-2 px-5 py-2 rounded-lg hover:bg-white/30 transition text-sm cursor-pointer"
-                            >
-                                🚀 Start Workout
-                            </button>
+                            {exercises.length > 0 &&
+                                <button
+                                    onClick={handleStart}
+                                    className="bg-white/70 flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/30 transition text-sm cursor-pointer"
+                                >
+                                    🚀 Start
+                                </button>
+                            }
                         </div>
 
                         {/* Right: Edit / Delete */}
@@ -128,13 +130,13 @@ export default function WorkoutView({ workoutId }) {
                         </div>
                     </div>
 
-                    {/* 📜 Quest Tasks */}
+                    {/* Exercises */}
                     <div className="space-y-6">
                         {sortedExercises.map((ex, idx) => (
                             <React.Fragment key={ex.id}>
                                 {/* Exercise Block */}
-                                <div className="flex items-start gap-4 p-5 rounded-xl hover:shadow-md transition bg-white/70">
-                                    <div className="flex items-center justify-center bg-purple-200 text-purple-700 font-bold w-10 h-10 rounded-full">
+                                <div className="flex items-start gap-4 p-4 rounded-xl shadow-md hover:shadow-lg transition bg-white/30 hover:bg-white/50">
+                                    <div className="flex shrink-0 items-center justify-center bg-purple-200 text-purple-700 font-bold text-xs w-6 h-6 rounded-full">
                                         {idx + 1}
                                     </div>
                                     <div>

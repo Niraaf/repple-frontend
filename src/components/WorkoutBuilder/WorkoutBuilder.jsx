@@ -179,7 +179,7 @@ export default function WorkoutBuilder({ workoutId }) {
         items={exercises.map(getExerciseId)}
         strategy={rectSortingStrategy}
       >
-        <div className="flex flex-col items-center w-full min-h-screen pt-30">
+        <div className="flex flex-col items-center w-full min-h-screen pt-30 touch-manipulation">
 
           {/* Header */}
           {!loading && !error && (
