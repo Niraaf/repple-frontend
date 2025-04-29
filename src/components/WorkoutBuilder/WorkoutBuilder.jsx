@@ -62,8 +62,7 @@ export default function WorkoutBuilder({ workoutId }) {
 
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(TouchSensor, { activationConstraint: { delay: 400, tolerance: 5 } })
+    useSensor(PointerSensor, { activationConstraint: { delay: 150, tolerance: 5 } })
   );
 
   const getExerciseId = (exercise) => exercise.id || exercise.tempId;
