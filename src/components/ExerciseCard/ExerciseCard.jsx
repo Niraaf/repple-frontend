@@ -20,7 +20,7 @@ export default function ExerciseCard({ ex, index, onChange, onDelete }) {
             style={style}
             {...attributes}
             {...listeners}
-            className="w-50 h-50 rounded-xl p-3 flex flex-col justify-between cursor-grab active:cursor-grabbing bg-white/30 backdrop-blur-md relative touch-action-none"
+            className="w-50 h-50 rounded-xl p-3 flex flex-col justify-between cursor-grab active:cursor-grabbing bg-white/30 backdrop-blur-md relative touch-none"
         >
             {/* Position Badge */}
             <div className="absolute -top-2 -left-2 bg-purple-200 text-purple-700 w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold shadow-sm">
