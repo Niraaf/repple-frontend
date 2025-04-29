@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import {
   DndContext,
   closestCenter,
-  PointerSensor,
+  MouseSensor,
   useSensor,
   useSensors,
   TouchSensor
@@ -63,7 +63,7 @@ export default function WorkoutBuilder({ workoutId }) {
 
   const sensors = useSensors(
     useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
-    useSensor(PointerSensor, { activationConstraint: { distance: 50 } })
+    useSensor(MouseSensor)
   );
 
   const getExerciseId = (exercise) => exercise.id || exercise.tempId;
