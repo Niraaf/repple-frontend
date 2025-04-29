@@ -1,8 +1,8 @@
 export default function DeleteModal({ onConfirm, onCancel }) {
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md" onClick={onCancel}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-md" onClick={onCancel}>
             <div
-                className="bg-white p-8 rounded-xl shadow-xl max-w-sm w-[90%] relative animate-fade-in"
+                className="bg-white/30 hover:bg-white/50 border-4 border-b-0 border-white/30 p-8 rounded-xl shadow-xl max-w-sm w-[90%] relative animate-fade-in"
                 onClick={(e) => e.stopPropagation()}
             >
                 <h2 className="text-lg font-bold mb-4 text-gray-800 text-center">Delete this workout?</h2>
@@ -10,13 +10,13 @@ export default function DeleteModal({ onConfirm, onCancel }) {
 
                 <div className="flex justify-center gap-4">
                     <button
-                        className="px-5 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg transition"
+                        className="px-5 py-2 bg-gray-400 hover:bg-gray-500 text-white font-semibold rounded-lg transition cursor-pointer"
                         onClick={onCancel}
                     >
                         Cancel
                     </button>
                     <button
-                        className="px-5 py-2 bg-red-500 hover:bg-red-600 text-white font-bold rounded-lg transition"
+                        className="px-5 py-2 bg-red-500 hover:bg-red-600 text-white font-bold rounded-lg transition cursor-pointer"
                         onClick={onConfirm}
                     >
                         Delete

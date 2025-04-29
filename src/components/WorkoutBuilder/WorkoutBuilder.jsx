@@ -185,7 +185,7 @@ export default function WorkoutBuilder({ workoutId }) {
 
           {/* Header */}
           {!loading && !error && (
-            <div className="w-full max-w-3xl px-6 mb-2">
+            <div className="w-full max-w-5xl px-6 mb-2">
               <input
                 type="text"
                 value={workoutName}
@@ -198,17 +198,17 @@ export default function WorkoutBuilder({ workoutId }) {
 
           {/* Action Buttons - Clean & Centered */}
           {!loading && !error && (
-            <div className="flex justify-center gap-4">
+            <div className="flex justify-center gap-4 max-w-5xl px-6">
               <button
                 onClick={handleOpenModal}
-                className="flex items-center gap-2 px-5 py-2 border border-gray-300 rounded-full hover:bg-gray-100 transition text-sm shadow-sm cursor-pointer"
+                className="bg-white/30 hover:bg-white/50 font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer"
               >
                 ➕ Add Exercise
               </button>
               <button
                 onClick={handleSaveWorkout}
-                className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-semibold transition cursor-pointer ${saving ? "bg-green-300 cursor-not-allowed" : "bg-green-500/30 hover:bg-green-600/60"
-                  } text-white shadow-md`}
+                className="bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 
+                  text-white font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer"
                 disabled={saving}
               >
                 {saving ? "💾 Saving Workout..." : "💾 Save Workout"}
@@ -222,10 +222,10 @@ export default function WorkoutBuilder({ workoutId }) {
 
           {/* Main Content */}
           {!loading && !error && (
-            <div className="flex flex-col items-center gap-10 w-full max-w-5xl">
+            <div className="flex flex-col items-center gap-10 p-6 w-full max-w-5xl">
 
               {/* Exercise Flow */}
-              <div className="flex flex-wrap justify-center gap-6 p-6 rounded-2xl w-full">
+              <div className="flex flex-wrap justify-center gap-6 rounded-2xl w-full">
 
                 {/* Modern Cards */}
                 {exercises.length === 0 ? (

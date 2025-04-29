@@ -150,7 +150,7 @@ const ExerciseModal = ({ onClose, onAddExercise, addedExerciseIds }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm" onClick={onClose}>
-      <div className="flex flex-col items-center bg-white/80 rounded-3xl shadow-2xl p-8 relative w-[90%] max-w-5xl h-[90%] animate-fade-in" onClick={(e) => e.stopPropagation()}>
+      <div className="flex flex-col items-center bg-white/50 border-4 border-b-0 border-white/30 rounded-3xl shadow-2xl p-8 relative w-[90%] max-w-5xl h-[90%] animate-fade-in" onClick={(e) => e.stopPropagation()}>
         
         {/* Close Button */}
         <button
@@ -245,7 +245,7 @@ const ExerciseModal = ({ onClose, onAddExercise, addedExerciseIds }) => {
         </button>
 
         {/* Exercise List */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full overflow-y-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full overflow-y-auto pr-2">
           {loading ? (
             <p className="text-gray-400 text-sm col-span-2 text-center animate-pulse">
               Loading exercises...

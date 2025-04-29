@@ -1,6 +1,6 @@
 const ExerciseListItem = ({ ex, onAdd, isAdded }) => {
   return (
-    <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-xl hover:shadow-sm transition h-20">
+    <div className="flex items-center justify-between p-4 bg-white/50 hover:bg-white/70 border-4 border-b-0 border-white/30 rounded-xl hover:shadow-sm transition h-20">
 
       {/* Info */}
       <div className="flex flex-col">
