@@ -16,7 +16,7 @@ import {
   rectSortingStrategy,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
+import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 import { useAuth } from "@/contexts/authContext";
 import { v4 as uuidv4 } from 'uuid';
 import ExerciseCard from "../ExerciseCard/ExerciseCard";
@@ -63,7 +63,7 @@ export default function WorkoutBuilder({ workoutId }) {
 
   const sensors = useSensors(
     useSensor(PointerSensor),
-    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } })
+    useSensor(TouchSensor, { activationConstraint: { delay: 400, tolerance: 5 } })
   );
 
   const getExerciseId = (exercise) => exercise.id || exercise.tempId;
@@ -175,6 +175,7 @@ export default function WorkoutBuilder({ workoutId }) {
       sensors={sensors}
       collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}
+      modifiers={[restrictToWindowEdges]}
     >
       <SortableContext
         items={exercises.map(getExerciseId)}
