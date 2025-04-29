@@ -5,10 +5,18 @@ import { AuthProvider } from "@/contexts/authContext"; // Import AuthProvider
 import { BrowserRouter } from 'react-router-dom'; // Import BrowserRouter
 import Header from "@/components/Header/Header";
 
+import { Space_Mono } from 'next/font/google';
+
+const spaceMono = Space_Mono({
+    subsets: ["latin"],
+    weight: ["400", "700"],
+});
+
+
 export default function RootLayout({ children }) {
     return (
         <html lang="en">
-            <body className="min-h-screen bg-gradient-to-bl from-red-200 to-green-200 relative bg-fixed">
+            <body className={`min-h-screen bg-gradient-to-bl from-red-200 to-green-200 relative bg-fixed font-mono ${spaceMono.className}`}>
 
                 {/* 🌈 Blobs Container */}
                 <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">

@@ -81,7 +81,7 @@ export default function WorkoutView({ workoutId }) {
     };
 
     return (
-        <div className="flex justify-center w-full min-h-screen p-10 pt-30">
+        <div className="flex flex-col items-center justify-center w-full min-h-screen p-10 pt-30">
 
             {loading && <p className="text-gray-400 animate-pulse">Loading your workout details...</p>}
 
@@ -90,7 +90,7 @@ export default function WorkoutView({ workoutId }) {
                     {/* 🏷️ Quest Header */}
                     <div className="mb-8 text-center">
                         <h1 className="text-5xl font-extrabold tracking-tight text-gray-800">
-                            🎮 {workoutDetails.workoutName}
+                            {workoutDetails.workoutName}
                         </h1>
                         <p className="mt-3 text-sm text-gray-500 italic">
                             ⏳ {workoutDetails.estimated_duration} mins • 🗡️ {workoutDetails.num_exercises} Tasks • 🕒 Last: {formatLastPerformed(workoutDetails.last_performed)}
@@ -104,7 +104,8 @@ export default function WorkoutView({ workoutId }) {
                             {exercises.length > 0 &&
                                 <button
                                     onClick={handleStart}
-                                    className="bg-white/70 flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/30 transition text-sm cursor-pointer"
+                                    className="bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 
+                                    text-white font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer"
                                 >
                                     🚀 Start
                                 </button>
@@ -135,7 +136,7 @@ export default function WorkoutView({ workoutId }) {
                         {sortedExercises.map((ex, idx) => (
                             <React.Fragment key={ex.id}>
                                 {/* Exercise Block */}
-                                <div className="flex items-start gap-4 p-4 rounded-xl shadow-md hover:shadow-lg transition bg-white/30 hover:bg-white/50">
+                                <div className="flex items-start gap-4 p-4 rounded-xl shadow-md hover:shadow-lg transition bg-white/30 hover:bg-white/50 border-4 border-b-0 border-white/30">
                                     <div className="flex shrink-0 items-center justify-center bg-purple-200 text-purple-700 font-bold text-xs w-6 h-6 rounded-full">
                                         {idx + 1}
                                     </div>

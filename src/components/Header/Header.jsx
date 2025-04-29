@@ -16,9 +16,6 @@ export default function Header() {
 
     const router = useRouter();
     const pathname = usePathname();
-    const prevScrollY = useRef(0);
-    const currScrollY = useRef(0);
-    const mouseNearTopRef = useRef(false);
 
     const handleBack = () => {
         if (pathname === '/' || pathname === '') {
@@ -49,50 +46,21 @@ export default function Header() {
     };
 
     const handleScroll = () => {
-        const currentScrollY = window.scrollY;
-        setIsScrolled(currentScrollY > 50);
-
-        if (currentScrollY < 100) {
-            setVisible(true);
-        } else if (currentScrollY > prevScrollY.current && !mouseNearTopRef.current) {
-            setVisible(false);
-        } else if (currentScrollY < prevScrollY.current) {
-            setVisible(true);
-        }
-
-        prevScrollY.current = currScrollY.current;
-        currScrollY.current = currentScrollY;
-    };
-
-    const handleMouseMove = (event) => {
-        const dynamicMargin = Math.max(50, window.innerWidth * 0.1);
-
-        if (event.clientY < 100 && event.clientX > dynamicMargin && event.clientX < window.innerWidth - dynamicMargin) {
-            mouseNearTopRef.current = true;
-            setVisible(true);
-        } else {
-            mouseNearTopRef.current = false;
-            if (currScrollY.current > prevScrollY.current && currScrollY.current > 50) {
-                setVisible(false);
-            }
-        }
+        setIsScrolled(window.scrollY > 20);
     };
 
     useEffect(() => {
         window.addEventListener("scroll", handleScroll);
-        window.addEventListener("mousemove", handleMouseMove);
         return () => {
             window.removeEventListener("scroll", handleScroll);
-            window.removeEventListener("mousemove", handleMouseMove);
         };
     }, []);
 
     return (
         <>
             <header
-                className={`fixed top-4 left-1/2 transform -translate-x-1/2 w-[94%] max-w-5xl px-4 py-3 z-30 rounded-full backdrop-blur-md 
+                className={`fixed top-0 left-1/2 transform -translate-x-1/2 w-[94%] max-w-5xl px-4 py-3 z-30 rounded-b-4xl backdrop-blur-md 
                     ${isScrolled ? "shadow-lg" : ""} 
-                    ${visible ? "translate-y-0" : "-translate-y-[200%]"}
                     transition-all duration-300 ease-in-out flex items-center justify-between
                 `}
             >
@@ -100,7 +68,7 @@ export default function Header() {
                 <div className="flex items-center gap-3">
                     <button
                         onClick={handleBack}
-                        className="bg-white/70 hover:bg-white text-gray-700 w-10 h-10 rounded-full p-2 shadow-md transition cursor-pointer"
+                        className="bg-white/70 hover:bg-white text-gray-700 w-8 h-8 text-xs rounded-full p-2 shadow-md transition cursor-pointer"
                     >
                         ←
                     </button>
@@ -134,7 +102,8 @@ export default function Header() {
                         ) : (
                             <button
                                 onClick={handleSignOut}
-                                className="px-3 py-1 text-white bg-green-500 rounded-full hover:bg-green-600 transition"
+                                className="bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 
+                                text-white font-bold px-5 py-1 rounded-full shadow-md transition cursor-pointer"
                             >
                                 Sign Out
                             </button>

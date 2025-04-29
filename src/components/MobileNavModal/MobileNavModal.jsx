@@ -5,12 +5,12 @@ import Link from "next/link";
 export default function MobileNavModal({ onClose, userLoggedIn, currentUser, handleSignOut }) {
     return (
         <div
-            className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm flex justify-center items-center"
+            className="fixed inset-0 z-40 backdrop-blur-sm flex justify-center items-center"
             onClick={onClose}
         >
             <div
                 onClick={(e) => e.stopPropagation()}
-                className="bg-white/80 backdrop-blur-xl w-72 p-6 rounded-2xl shadow-lg flex flex-col gap-6 animate-slide-up"
+                className="bg-white/50 backdrop-blur-xl w-72 p-6 rounded-2xl shadow-lg flex flex-col gap-6 animate-slide-up border-4 border-b-0 border-white/30"
             >
                 {/* ✖ Close Button */}
                 <button

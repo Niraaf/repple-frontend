@@ -13,7 +13,7 @@ export default function WorkoutCard({ workout, idx, onView }) {
     return (
         <div
             onClick={() => onView(workout.id)}
-            className="w-full max-w-3xl bg-white/30 backdrop-blur-md rounded-xl px-6 py-4 shadow-md hover:shadow-lg transition cursor-pointer flex justify-between items-center"
+            className="w-full max-w-3xl backdrop-blur-md rounded-xl px-6 py-4 shadow-md hover:shadow-lg transition cursor-pointer flex justify-between items-center bg-white/30 hover:bg-white/50 border-4 border-b-0 border-white/30"
         >
             <div className="flex flex-col w-[80%]">
                 <h2 className="text-sm md:text-lg font-bold truncate">{workout.name}</h2>
@@ -27,10 +27,11 @@ export default function WorkoutCard({ workout, idx, onView }) {
                     window.location.href = `/workouts/${workout.id}/train`;
                 }}
                 onMouseDown={(e) => e.stopPropagation()}
-                className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-full shadow transition text-sm shrink-0 flex items-center justify-center"
+                className="bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 
+                     text-white font-bold px-5 py-3 rounded-full shadow-md transition cursor-pointer"
                 title="Quick Start"
             >
-                ▶️
+                ▶
             </button>
         </div>
     );

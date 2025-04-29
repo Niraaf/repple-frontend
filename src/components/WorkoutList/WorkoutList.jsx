@@ -85,7 +85,7 @@ export default function WorkoutList() {
             {!loading && (
                 <button
                     className="bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 
-                     text-white font-bold py-3 px-8 rounded-full shadow-md transition"
+                     text-white font-bold py-3 px-8 rounded-full shadow-md transition cursor-pointer"
                     onClick={handleCreate}
                 >
                     + Create New Workout
