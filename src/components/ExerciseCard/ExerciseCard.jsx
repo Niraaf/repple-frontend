@@ -19,45 +19,46 @@ export default function ExerciseCard({ ex, index, onChange, onDelete }) {
             style={style}
             {...attributes}
             {...listeners}
-            className="w-48 min-h-48 rounded-xl p-4 flex flex-col gap-3 hover:shadow-md cursor-grab active:cursor-grabbing backdrop-blur-md"
+            className="w-50 h-50 rounded-xl p-3 flex flex-col justify-between cursor-grab active:cursor-grabbing bg-white/70 backdrop-blur-md"
         >
             {/* Position Badge */}
             <div className="absolute -top-2 -left-2 bg-purple-200 text-purple-700 w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold shadow-sm">
                 {index + 1}
             </div>
 
-            {/* Header */}
-            <div className="flex justify-between items-start">
-                <h3 className="font-semibold text-sm text-gray-800 leading-snug">⚔️ {ex.name}</h3>
-                <button
-                    className="text-gray-300 hover:text-red-400 transition text-sm"
-                    onClick={() => onDelete(uniqueId)}
-                >
-                    ✕
-                </button>
-            </div>
+            <div>
+                {/* Header */}
+                <div className="flex justify-between items-start mb-1">
+                    <h3 className="font-semibold text-sm text-gray-800 leading-snug">⚔️ {ex.name}</h3>
+                    <button
+                        className="text-gray-300 hover:text-red-400 transition text-sm cursor-pointer"
+                        onClick={() => onDelete(uniqueId)}
+                    >
+                        ✕
+                    </button>
+                </div>
 
-            {/* Tags */}
-            <div className="flex flex-wrap gap-1">
-                {ex.muscle_groups.map(group => (
-                    <span key={group} className="bg-blue-100 text-blue-700 text-[10px] px-2 py-0.5 rounded-full">
-                        {group}
+                {/* Tags */}
+                <div className="flex flex-wrap gap-1">
+                    {ex.muscle_groups.map(group => (
+                        <span key={group} className="bg-blue-100 text-blue-700 text-[10px] px-2 py-0.5 rounded-full">
+                            {group}
+                        </span>
+                    ))}
+                    <span className="bg-green-100 text-green-700 text-[10px] px-2 py-0.5 rounded-full">
+                        {ex.equipment}
                     </span>
-                ))}
-                <span className="bg-green-100 text-green-700 text-[10px] px-2 py-0.5 rounded-full">
-                    {ex.equipment}
-                </span>
-                <span className="bg-purple-100 text-purple-700 text-[10px] px-2 py-0.5 rounded-full">
-                    {ex.type}
-                </span>
-                <span className="bg-pink-100 text-pink-700 text-[10px] px-2 py-0.5 rounded-full">
-                    {ex.focus}
-                </span>
+                    <span className="bg-purple-100 text-purple-700 text-[10px] px-2 py-0.5 rounded-full">
+                        {ex.type}
+                    </span>
+                    <span className="bg-pink-100 text-pink-700 text-[10px] px-2 py-0.5 rounded-full">
+                        {ex.focus}
+                    </span>
+                </div>
             </div>
-
 
             {/* Stats */}
-            <div className="flex flex-col gap-2 text-[11px]">
+            <div className="flex flex-col gap-1 text-[11px]">
                 {[
                     { label: "Sets", field: "sets", value: ex.sets },
                     { label: "Reps", field: "reps", value: ex.reps },

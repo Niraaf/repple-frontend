@@ -9,11 +9,13 @@ const ExerciseModal = ({ onClose, onAddExercise, addedExerciseIds }) => {
     exerciseTypes: [],
     focus: []
   });
-  const [activeDropdown, setActiveDropdown] = useState(null);
+  const [activeDropdown, setActiveDropdown] = useState(null); // { label: string, alignRight: boolean } | null
   const [searchQuery, setSearchQuery] = useState("");
   const [exerciseLibrary, setExerciseLibrary] = useState([]);
   const [loading, setLoading] = useState(true);
-  const dropdownRef = useRef(null);
+
+  const activeDropdownRef = useRef(null);  // Ref for the open dropdown
+  const activeTriggerRef = useRef(null);   // Ref for the button that opened it
 
   const multiSelectCategories = ['Muscle Group', 'Equipment'];
 
@@ -24,34 +26,29 @@ const ExerciseModal = ({ onClose, onAddExercise, addedExerciseIds }) => {
         return {
           ...prevFilters,
           [category]: current.includes(value)
-            ? current.filter(v => v !== value)  // Remove if already selected
-            : [...current, value]               // Add if not selected
+            ? current.filter(v => v !== value)
+            : [...current, value]
         };
       } else {
         return {
           ...prevFilters,
-          [category]: prevFilters[category] === value ? null : value  // Single-select toggle
+          [category]: prevFilters[category] === value ? null : value
         };
       }
     });
     setActiveDropdown(null);
+    activeTriggerRef.current = null;
   };
 
   const handleRemoveFilter = (category, option = null) => {
     setFilters((prevFilters) => {
-      // Handle Multi-Select Categories
       if (multiSelectCategories.includes(category)) {
         const currentSelections = prevFilters[category] || [];
-
-        const updatedSelections = currentSelections.filter(item => item !== option);
-
         return {
           ...prevFilters,
-          [category]: updatedSelections
+          [category]: currentSelections.filter(item => item !== option)
         };
       }
-
-      // Handle Single-Select Categories
       return {
         ...prevFilters,
         [category]: null
@@ -59,8 +56,18 @@ const ExerciseModal = ({ onClose, onAddExercise, addedExerciseIds }) => {
     });
   };
 
-  const handleFilterButtonClick = (filterLabel) => {
-    setActiveDropdown((prev) => (prev === filterLabel ? null : filterLabel));
+  const handleFilterButtonClick = (filterLabel, event) => {
+    if (activeDropdown?.label === filterLabel) {
+      setActiveDropdown(null);
+      activeTriggerRef.current = null;
+    } else {
+      const rect = event.currentTarget.getBoundingClientRect();
+      const screenWidth = window.innerWidth;
+      const alignRight = rect.left > screenWidth / 2;
+
+      setActiveDropdown({ label: filterLabel, alignRight });
+      activeTriggerRef.current = event.currentTarget;
+    }
   };
 
   const filterOptions = [
@@ -70,7 +77,6 @@ const ExerciseModal = ({ onClose, onAddExercise, addedExerciseIds }) => {
     { label: 'Focus', options: filterOptionsData.focus },
   ];
 
-  // Apply filters + search
   const filteredExercises = exerciseLibrary.filter((ex) => {
     return Object.entries(filters).every(([category, value]) => {
       if (!value || (Array.isArray(value) && value.length === 0)) return true;
@@ -85,20 +91,19 @@ const ExerciseModal = ({ onClose, onAddExercise, addedExerciseIds }) => {
       const exKey = keyMap[category];
       const exValue = ex[exKey];
 
+      if (!exValue) return false;
+
       if (multiSelectCategories.includes(category)) {
-        // For multi-select filters like Muscle Group & Equipment
         if (Array.isArray(exValue)) {
           return value.some(v => exValue.map(e => e.toLowerCase()).includes(v.toLowerCase()));
         } else {
           return value.includes(exValue);
         }
       } else {
-        // Single-select filters
         return exValue?.toLowerCase() === value.toLowerCase();
       }
     }) && ex.name.toLowerCase().includes(searchQuery.toLowerCase());
   });
-
 
   useEffect(() => {
     const fetchData = async () => {
@@ -116,7 +121,7 @@ const ExerciseModal = ({ onClose, onAddExercise, addedExerciseIds }) => {
       } catch (err) {
         console.error("Failed to fetch data:", err);
       } finally {
-        setLoading(false);  // Stop loading regardless of success/failure
+        setLoading(false);
       }
     };
 
@@ -125,8 +130,12 @@ const ExerciseModal = ({ onClose, onAddExercise, addedExerciseIds }) => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      if (!activeDropdownRef.current || activeTriggerRef.current?.contains(event.target)) {
+        return;
+      }
+      if (!activeDropdownRef.current.contains(event.target)) {
         setActiveDropdown(null);
+        activeTriggerRef.current = null;
       }
     };
 
@@ -139,11 +148,10 @@ const ExerciseModal = ({ onClose, onAddExercise, addedExerciseIds }) => {
     };
   }, [activeDropdown]);
 
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm" onClick={onClose}>
-      <div className="flex flex-col items-center justify-center bg-white/80 rounded-3xl shadow-2xl w-full max-w-5xl p-8 relative h-170" onClick={(e) => e.stopPropagation()}>
-
+      <div className="flex flex-col items-center bg-white/80 rounded-3xl shadow-2xl p-8 relative w-[90%] max-w-5xl h-[90%] animate-fade-in" onClick={(e) => e.stopPropagation()}>
+        
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -170,12 +178,10 @@ const ExerciseModal = ({ onClose, onAddExercise, addedExerciseIds }) => {
 
         {/* Active Filters */}
         {Object.values(filters).some(val => val && (Array.isArray(val) ? val.length > 0 : true)) && (
-          <div className="flex flex-wrap gap-2 mb-6">
-            {Object.entries(filters).map(([category, selected]) => {
-              if (!selected || (Array.isArray(selected) && selected.length === 0)) return null;
-
-              if (Array.isArray(selected)) {
-                return selected.map(option => (
+          <div className="flex flex-wrap gap-2 mb-2">
+            {Object.entries(filters).map(([category, selected]) => (
+              Array.isArray(selected) ? (
+                selected.map(option => (
                   <button
                     key={`${category}-${option}`}
                     className="flex items-center bg-purple-100 text-purple-700 text-xs px-3 py-1 rounded-full hover:bg-purple-200 transition"
@@ -183,10 +189,8 @@ const ExerciseModal = ({ onClose, onAddExercise, addedExerciseIds }) => {
                   >
                     {option} <span className="ml-1">✕</span>
                   </button>
-                ));
-              }
-
-              return (
+                ))
+              ) : (
                 <button
                   key={`${category}-${selected}`}
                   className="flex items-center bg-purple-100 text-purple-700 text-xs px-3 py-1 rounded-full hover:bg-purple-200 transition"
@@ -194,28 +198,36 @@ const ExerciseModal = ({ onClose, onAddExercise, addedExerciseIds }) => {
                 >
                   {selected} <span className="ml-1">✕</span>
                 </button>
-              );
-            })}
+              )
+            ))}
           </div>
         )}
 
         {/* Filter Buttons */}
-        <div className="flex flex-wrap gap-3 mb-3" ref={dropdownRef}>
-          {filterOptions.map((filter, index) => (
+        <div className="flex flex-wrap gap-4 mb-3 justify-center">
+          {filterOptions.map((filter) => (
             <div key={filter.label} className="relative">
               <button
                 className="bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs font-semibold py-2 px-4 rounded-full transition"
-                onClick={() => handleFilterButtonClick(filter.label)}
+                onClick={(e) => handleFilterButtonClick(filter.label, e)}
               >
                 {filter.label}
               </button>
-              {activeDropdown === filter.label && (
-                <div className="absolute mt-2 bg-white border border-gray-300 rounded-xl shadow-md w-40 z-20">
+
+              {activeDropdown?.label === filter.label && (
+                <div
+                  ref={activeDropdownRef}
+                  className={`absolute mt-2 bg-white border border-gray-300 rounded-xl shadow-md w-40 z-20 animate-fade-in ${activeDropdown.alignRight ? 'right-0' : 'left-0'}`}
+                >
                   {filter.options.map(option => (
                     <button
                       key={option}
-                      className={`w-full text-left text-sm px-4 py-2 hover:bg-gray-100 transition ${filters[filter.label] === option ? 'bg-blue-50 font-semibold' : ''
-                        }`}
+                      className={`w-full text-left text-sm px-4 py-2 hover:bg-gray-100 transition ${Array.isArray(filters[filter.label])
+                        ? filters[filter.label]?.includes(option)
+                        : filters[filter.label] === option
+                        ? 'bg-blue-50 font-semibold'
+                        : ''
+                      }`}
                       onClick={() => handleFilterChange(filter.label, option)}
                     >
                       {option}
@@ -227,13 +239,13 @@ const ExerciseModal = ({ onClose, onAddExercise, addedExerciseIds }) => {
           ))}
         </div>
 
-        {/* ➕ Custom Exercise */}
+        {/* Custom Exercise Button */}
         <button className="mb-6 bg-green-100 hover:bg-green-200 text-green-700 text-sm font-semibold py-2 px-4 rounded-full transition">
           + Create Custom Exercise
         </button>
 
         {/* Exercise List */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full h-full overflow-y-auto pr-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full overflow-y-auto">
           {loading ? (
             <p className="text-gray-400 text-sm col-span-2 text-center animate-pulse">
               Loading exercises...
@@ -256,7 +268,7 @@ const ExerciseModal = ({ onClose, onAddExercise, addedExerciseIds }) => {
 
       </div>
     </div>
-
   );
-}
+};
+
 export default ExerciseModal;

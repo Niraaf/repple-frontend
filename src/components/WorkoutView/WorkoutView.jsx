@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import DeleteModal from "../DeleteModal/DeleteModal";
 export default function WorkoutView({ workoutId }) {
     const [exercises, setExercises] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -10,11 +11,12 @@ export default function WorkoutView({ workoutId }) {
         estimated_duration: 0,
         last_performed: null
     });
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
 
     useEffect(() => {
         const fetchWorkoutData = async () => {
             try {
-                const res = await fetch(`/api/workout/${workoutId}/exercises`);
+                const res = await fetch(`/api/workout/${workoutId}/workout-details`);
                 const data = await res.json();
 
                 setExercises(data.exercises);
@@ -33,8 +35,6 @@ export default function WorkoutView({ workoutId }) {
 
         fetchWorkoutData();
     }, [workoutId]);
-
-    if (loading) return <div className="text-center mt-10">Loading workout...</div>;
 
     const sortedExercises = exercises.sort((a, b) => a.sequence - b.sequence);
 
@@ -55,65 +55,131 @@ export default function WorkoutView({ workoutId }) {
         window.location.href = `/workouts/${workoutId}/edit`
     }
 
+    const handleDelete = () => {
+        setShowDeleteModal(true);
+    };
+
+    const confirmDelete = async () => {
+        try {
+            const res = await fetch(`/api/workout/${workoutId}/delete`, {
+                method: "DELETE",
+            });
+
+            if (res.ok) {
+                alert("Workout deleted successfully!");
+                window.location.href = "/workouts"; // Redirect
+            } else {
+                const errorData = await res.json();
+                alert(`Failed to delete workout: ${errorData.message}`);
+            }
+        } catch (err) {
+            console.error("Error deleting workout:", err);
+            alert("An unexpected error occurred.");
+        } finally {
+            setShowDeleteModal(false);
+        }
+    };
+
     return (
-        <div className="p-10 m-10 mt-30 max-w-5xl mx-auto bg-white border border-gray-200 rounded-2xl shadow-sm relative">
+        <div className="flex justify-center w-full min-h-screen p-10 pt-30">
 
-            {/* 🏷️ Quest Header */}
-            <div className="mb-8 text-center">
-                <h1 className="text-5xl font-extrabold tracking-tight text-gray-800">
-                    🎮 {workoutDetails.workoutName}
-                </h1>
-                <p className="mt-3 text-sm text-gray-500 italic">
-                    ⏳ {workoutDetails.estimated_duration} mins • 🗡️ {workoutDetails.num_exercises} Tasks • 🕒 Last: {formatLastPerformed(workoutDetails.last_performed)}
-                </p>
-            </div>
+            {loading && <p className="text-gray-400 animate-pulse">Loading your workout details...</p>}
 
-            {/* 🎮 Action Buttons */}
-            <div className="flex justify-center gap-4 mb-12">
-                <button
-                    onClick={handleStart}
-                    className="flex items-center gap-2 px-5 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition text-sm"
-                >
-                    🚀 Start Quest
-                </button>
-            </div>
+            {!loading &&
+                <div className="flex flex-col w-full h-full max-w-5xl px-10">
+                    {/* 🏷️ Quest Header */}
+                    <div className="mb-8 text-center">
+                        <h1 className="text-5xl font-extrabold tracking-tight text-gray-800">
+                            🎮 {workoutDetails.workoutName}
+                        </h1>
+                        <p className="mt-3 text-sm text-gray-500 italic">
+                            ⏳ {workoutDetails.estimated_duration} mins • 🗡️ {workoutDetails.num_exercises} Tasks • 🕒 Last: {formatLastPerformed(workoutDetails.last_performed)}
+                        </p>
+                    </div>
 
-            <button
-                onClick={handleEdit}
-                className="absolute top-4 right-4 p-2 bg-gray-100 hover:bg-purple-100 text-purple-600 rounded-full transition shadow-sm"
-                title="Edit Quest"
-            >
-                ✏️
-            </button>
-
-
-            {/* 📜 Quest Tasks */}
-            <div className="space-y-6">
-                {sortedExercises.map((ex, idx) => (
-                    <React.Fragment key={ex.id}>
-                        {/* Exercise Block */}
-                        <div className="flex items-start gap-4 p-5 border border-gray-200 rounded-xl hover:shadow-md transition bg-neutral-50">
-                            <div className="flex items-center justify-center bg-purple-200 text-purple-700 font-bold w-10 h-10 rounded-full">
-                                {idx + 1}
-                            </div>
-                            <div>
-                                <h2 className="font-semibold text-lg text-gray-800 mb-1">⚔️ {ex.name}</h2>
-                                <p className="text-sm text-gray-600 mb-1">🎯 {ex.focus} | 🏋️ {ex.type}</p>
-                                <p className="text-sm text-gray-500">📦 {ex.sets} Sets • {ex.reps} Reps • ⏱️ {ex.rest_between_sets}s Rest (between sets)</p>
-                            </div>
+                    {/* 🎮 Action Buttons */}
+                    <div className="flex justify-between items-center mb-8 flex-wrap gap-4">
+                        {/* Left: Start Button */}
+                        <div>
+                            <button
+                                onClick={handleStart}
+                                className="bg-white/70 flex items-center gap-2 px-5 py-2 rounded-lg hover:bg-white/30 transition text-sm cursor-pointer"
+                            >
+                                🚀 Start Workout
+                            </button>
                         </div>
 
-                        {/* Rest Between Exercises */}
-                        {idx < sortedExercises.length - 1 && (
-                            <div className="flex justify-center">
-                                <div className="flex items-center gap-2 text-xs text-yellow-600 bg-yellow-50 border border-yellow-200 px-4 py-2 rounded-full shadow-sm">
-                                    🌿 Rest Between Exercise: {ex.rest_between_exercise}s
+                        {/* Right: Edit / Delete */}
+                        <div className="flex gap-2">
+                            <button
+                                onClick={handleDelete}
+                                className="p-2 bg-red-100 hover:bg-red-200 text-red-600 rounded-full transition shadow-sm cursor-pointer"
+                                title="Delete Workout"
+                            >
+                                🗑️
+                            </button>
+                            <button
+                                onClick={handleEdit}
+                                className="p-2 bg-gray-100 hover:bg-purple-100 text-purple-600 rounded-full transition shadow-sm cursor-pointer"
+                                title="Edit Workout"
+                            >
+                                ✏️
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* 📜 Quest Tasks */}
+                    <div className="space-y-6">
+                        {sortedExercises.map((ex, idx) => (
+                            <React.Fragment key={ex.id}>
+                                {/* Exercise Block */}
+                                <div className="flex items-start gap-4 p-5 rounded-xl hover:shadow-md transition bg-white/70">
+                                    <div className="flex items-center justify-center bg-purple-200 text-purple-700 font-bold w-10 h-10 rounded-full">
+                                        {idx + 1}
+                                    </div>
+                                    <div>
+                                        <h2 className="font-semibold text-lg text-gray-800 mb-1">⚔️ {ex.name}</h2>
+                                        <div className="flex flex-wrap gap-1 my-1">
+                                            {ex.muscle_groups.map(group => (
+                                                <span key={group} className="bg-blue-100 text-blue-700 text-[10px] px-2 py-0.5 rounded-full">
+                                                    {group}
+                                                </span>
+                                            ))}
+                                            <span className="bg-green-100 text-green-700 text-[10px] px-2 py-0.5 rounded-full">
+                                                {ex.equipment}
+                                            </span>
+                                            <span className="bg-purple-100 text-purple-700 text-[10px] px-2 py-0.5 rounded-full">
+                                                {ex.type}
+                                            </span>
+                                            <span className="bg-pink-100 text-pink-700 text-[10px] px-2 py-0.5 rounded-full">
+                                                {ex.focus}
+                                            </span>
+                                        </div>
+                                        <p className="text-sm text-gray-500">{ex.sets} Sets • {ex.reps} Reps • ⏱️ {ex.rest_between_sets}s Rest (between sets)</p>
+                                    </div>
                                 </div>
-                            </div>
-                        )}
-                    </React.Fragment>
-                ))}
-            </div>
+
+                                {/* Rest Between Exercises */}
+                                {idx < sortedExercises.length - 1 && (
+                                    <div className="flex justify-center">
+                                        <div className="flex items-center gap-2 text-xs text-yellow-600 bg-yellow-50 border border-yellow-200 px-4 py-2 rounded-full shadow-sm">
+                                            🌿 Rest Between Exercise: {ex.rest_between_exercise}s
+                                        </div>
+                                    </div>
+                                )}
+                            </React.Fragment>
+                        ))}
+                    </div>
+                </div>
+            }
+
+            {/* Delete Modal Pop Up */}
+            {showDeleteModal && (
+                <DeleteModal
+                    onConfirm={confirmDelete}
+                    onCancel={() => setShowDeleteModal(false)}
+                />
+            )}
 
         </div>
     );

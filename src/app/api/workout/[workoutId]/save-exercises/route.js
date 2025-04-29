@@ -7,7 +7,7 @@ function calculateEstimatedDuration(exercises) {
     exercises.forEach((ex, idx) => {
         const sets = ex.sets;
         const reps = ex.reps;
-        const timePerSet = reps * avgSecondsPerRep;
+        const timePerSet = reps * avgSecondsPerRep + 10;
 
         totalSeconds += sets * timePerSet;
         totalSeconds += (sets - 1) * ex.rest_between_sets;
@@ -19,8 +19,6 @@ function calculateEstimatedDuration(exercises) {
 
     return Math.ceil(totalSeconds / 60);
 }
-
-
 
 export async function POST(req, context) {
     const params = await context.params;
@@ -37,7 +35,7 @@ export async function POST(req, context) {
         const { error: nameError } = await supabase
             .from('workouts')
             .update({
-                name: workoutName || "Untitled Workout",
+                name: workoutName,
                 num_exercises: exercises.length,
                 estimated_duration: calculateEstimatedDuration(exercises)
                 })

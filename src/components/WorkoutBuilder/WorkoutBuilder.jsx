@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import ExerciseModal from "../ExerciseModal/ExerciseModal";
 import {
   DndContext,
   closestCenter,
@@ -21,6 +20,7 @@ import { useAuth } from "@/contexts/authContext";
 import { v4 as uuidv4 } from 'uuid';
 import ExerciseCard from "../ExerciseCard/ExerciseCard";
 import RestBlock from "../RestBlock/RestBlock";
+import ExerciseModal from "../ExerciseModal/ExerciseModal";
 
 export default function WorkoutBuilder({ workoutId }) {
   const [loading, setLoading] = useState(true);
@@ -38,7 +38,7 @@ export default function WorkoutBuilder({ workoutId }) {
       setError(false);
 
       try {
-        const res = await fetch(`/api/workout/${workoutId}/exercises`);
+        const res = await fetch(`/api/workout/${workoutId}/workout-details`);
         if (!res.ok) throw new Error("Failed to fetch exercises");
 
         const data = await res.json();
@@ -106,21 +106,28 @@ export default function WorkoutBuilder({ workoutId }) {
     setIsModalOpen(!isModalOpen);
   };
 
+  const getSupabaseUserId = async (firebaseUid) => {
+    const res = await fetch(`/api/user/map-firebase?firebaseUid=${firebaseUid}`);
+    const data = await res.json();
+    return data.userId;  // This is profile.userid (Supabase UUID)
+  };
+
   // 🔥 Save Workout Button Handler
   const handleSaveWorkout = async () => {
     if (!currentUser || saving) return;
+    let savedWorkoutId = workoutId;
+    const supabaseUserId = await getSupabaseUserId(currentUser.uid);
     setSaving(true);
     try {
-      let savedWorkoutId = workoutId;
-
       // If it's a new workout (no ID), create it first
       if (!workoutId) {
         const res = await fetch('/api/workout/create', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            userId: currentUser.uid,
-            name: workoutName || "Untitled Workout"
+            userId: supabaseUserId,
+            name: workoutName || "Untitled Workout",
+            exercises
           })
         });
 
@@ -132,16 +139,16 @@ export default function WorkoutBuilder({ workoutId }) {
       await fetch(`/api/workout/${savedWorkoutId}/save-exercises`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ workoutName, exercises })
+        body: JSON.stringify({ workoutName: workoutName || "Untitled Workout", exercises })
       });
 
       alert("Workout saved successfully!");
+      window.location.href = `/workouts/${savedWorkoutId}`
     } catch (err) {
       console.error("Failed to save workout:", err);
       alert("Error saving workout.");
     } finally {
       setSaving(false);
-      window.location.href = `/workouts/${workoutId}`
     }
   };
 
@@ -189,20 +196,20 @@ export default function WorkoutBuilder({ workoutId }) {
 
           {/* Action Buttons - Clean & Centered */}
           {!loading && !error && (
-            <div className="flex justify-center gap-4 mb-5">
+            <div className="flex justify-center gap-4">
               <button
                 onClick={handleOpenModal}
-                className="flex items-center gap-2 px-5 py-2 border border-gray-300 rounded-full hover:bg-gray-100 transition text-sm shadow-sm"
+                className="flex items-center gap-2 px-5 py-2 border border-gray-300 rounded-full hover:bg-gray-100 transition text-sm shadow-sm cursor-pointer"
               >
                 ➕ Add Exercise
               </button>
               <button
                 onClick={handleSaveWorkout}
-                className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-semibold transition ${saving ? "bg-green-300 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"
+                className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-semibold transition cursor-pointer ${saving ? "bg-green-300 cursor-not-allowed" : "bg-green-500/30 hover:bg-green-600/60"
                   } text-white shadow-md`}
                 disabled={saving}
               >
-                💾 Save Workout
+                {saving ? "💾 Saving Workout..." : "💾 Save Workout"}
               </button>
             </div>
           )}
@@ -216,11 +223,11 @@ export default function WorkoutBuilder({ workoutId }) {
             <div className="flex flex-col items-center gap-10 w-full max-w-5xl">
 
               {/* Exercise Flow */}
-              <div className="flex flex-wrap justify-center gap-6 p-6 rounded-2xl bg-white w-full">
+              <div className="flex flex-wrap justify-center gap-6 p-6 rounded-2xl w-full">
 
                 {/* Modern Cards */}
                 {exercises.length === 0 ? (
-                  <p className="text-gray-300 italic">No tasks yet... click "Add Task" to begin your quest.</p>
+                  <p className="text-gray-400 italic">No exercises yet... click "Add Exercise" to begin.</p>
                 ) : (
                   exercises.map((ex, idx) => (
                     <React.Fragment key={getExerciseId(ex)}>
