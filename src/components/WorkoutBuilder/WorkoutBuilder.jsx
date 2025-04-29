@@ -16,6 +16,7 @@ import {
   rectSortingStrategy,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { useAuth } from "@/contexts/authContext";
 import { v4 as uuidv4 } from 'uuid';
 import ExerciseCard from "../ExerciseCard/ExerciseCard";
@@ -179,7 +180,7 @@ export default function WorkoutBuilder({ workoutId }) {
         items={exercises.map(getExerciseId)}
         strategy={rectSortingStrategy}
       >
-        <div className="flex flex-col items-center w-full min-h-screen pt-30 touch-manipulation">
+        <div className="flex flex-col items-center w-full min-h-screen pt-30 touch-manipulation touch-pan-y">
 
           {/* Header */}
           {!loading && !error && (
