@@ -6,8 +6,8 @@ export default function RestBlock({ value, onChange }) {
                 type="text"
                 inputMode="numeric"
                 value={value}
-                onChange={(e) => onChange(field, e.target.value)}
-                onBlur={(e) => onChange(field, parseInt(e.target.value))}
+                onChange={(e) => onChange(e.target.value)}
+                onBlur={(e) => onChange(parseInt(e.target.value) || "1")}
                 className="remove-arrows w-12 text-center py-1 border border-gray-200 rounded focus:ring-1 focus:ring-yellow-300 text-[11px] bg-white"
             />
             <span className="text-[9px] text-gray-400">sec</span>
