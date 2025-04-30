@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/authContext";
 import { doSignOut } from "@/firebase/auth";
 import { usePathname, useRouter } from 'next/navigation';
+import { useUnsavedChanges } from "@/contexts/unsavedChangesContext";
 import MobileNavModal from "../MobileNavModal/MobileNavModal";
 
 export default function Header() {
@@ -15,22 +16,36 @@ export default function Header() {
 
     const router = useRouter();
     const pathname = usePathname();
+    const { hasUnsavedChanges, setHasUnsavedChanges } = useUnsavedChanges();
+
+    const confirmAndNavigate = (path) => {
+        if (hasUnsavedChanges) {
+            const confirmed = window.confirm("You have unsaved changes. Leave anyway?");
+            if (!confirmed) return;
+        }
+        setMenuOpen(false)
+        router.push(path);
+    };
 
     const handleBack = () => {
         if (pathname === '/' || pathname === '') {
-            router.push('/'); // already at root, stay
+            confirmAndNavigate('/');
             return;
         }
 
-        // Remove the last segment
-        const segments = pathname.split('/').filter(Boolean); // filter(Boolean) removes empty strings
-        segments.pop(); // remove last part
-
+        const segments = pathname.split('/').filter(Boolean);
+        segments.pop();
         const newPath = '/' + segments.join('/');
-        router.push(newPath || '/'); // fallback to root if empty
+        confirmAndNavigate(newPath || '/');
     };
 
     const handleSignOut = async () => {
+        if (hasUnsavedChanges) {
+            const confirmed = window.confirm("You have unsaved changes. Leave anyway?");
+            if (!confirmed) return;
+            setHasUnsavedChanges(false);
+        }
+
         if (!isSigningOut) {
             setIsSigningOut(true);
             try {
@@ -79,10 +94,10 @@ export default function Header() {
 
                 {/* MIDDLE - Desktop Nav */}
                 <nav className="hidden md:flex space-x-6 text-sm font-medium text-gray-700">
-                    <Link href="/" className="hover:text-blue-500 transition-colors">Home</Link>
-                    <Link href="/workouts" className="hover:text-blue-500 transition-colors">My Workouts</Link>
-                    <Link href="/history" className="hover:text-blue-500 transition-colors">History</Link>
-                    <Link href="/profile" className="hover:text-blue-500 transition-colors">Profile</Link>
+                    <button onClick={() => confirmAndNavigate('/')} className="hover:text-blue-500 transition-colors">Home</button>
+                    <button onClick={() => confirmAndNavigate('/workouts')} className="hover:text-blue-500 transition-colors">My Workouts</button>
+                    <button onClick={() => confirmAndNavigate('/history')} className="hover:text-blue-500 transition-colors">History</button>
+                    <button onClick={() => confirmAndNavigate('/profile')} className="hover:text-blue-500 transition-colors">Profile</button>
                 </nav>
 
                 {/* RIGHT SIDE */}
@@ -91,12 +106,18 @@ export default function Header() {
                     <div className="hidden md:flex space-x-3">
                         {!userLoggedIn || currentUser?.isAnonymous ? (
                             <>
-                                <Link href="/login" className="px-3 py-1 text-white bg-blue-500 rounded-full hover:bg-blue-600 transition">
+                                <button
+                                    onClick={() => confirmAndNavigate('/login')}
+                                    className="px-3 py-1 text-white bg-blue-500 rounded-full hover:bg-blue-600 transition"
+                                >
                                     Login
-                                </Link>
-                                <Link href="/register" className="px-3 py-1 text-white bg-green-500 rounded-full hover:bg-green-600 transition">
+                                </button>
+                                <button
+                                    onClick={() => confirmAndNavigate('/register')}
+                                    className="px-3 py-1 text-white bg-green-500 rounded-full hover:bg-green-600 transition"
+                                >
                                     Register
-                                </Link>
+                                </button>
                             </>
                         ) : (
                             <button
@@ -114,9 +135,8 @@ export default function Header() {
                         ☰
                     </button>
                 </div>
-
-
             </header>
+
             {/* Mobile Menu Modal */}
             {menuOpen && (
                 <MobileNavModal

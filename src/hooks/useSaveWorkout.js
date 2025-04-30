@@ -40,7 +40,6 @@ const saveWorkout = async ({ workoutId, currentUser, workoutName, exercises }) =
 };
 
 export function useSaveWorkout() {
-    const router = useRouter();
     const queryClient = useQueryClient();
     const currentUser = useAuth();
 
@@ -50,12 +49,9 @@ export function useSaveWorkout() {
         onSuccess: (savedWorkoutId) => {
             queryClient.invalidateQueries({ queryKey: ["user-workouts"] });
             queryClient.invalidateQueries({ queryKey: ["workout-details", savedWorkoutId] });
-            alert("Workout saved successfully!");
-            router.push(`/workouts/${savedWorkoutId}`);
         },
         onError: (err) => {
             console.error("Error saving workout:", err);
-            alert("Failed to save workout.");
         },
     });
 }

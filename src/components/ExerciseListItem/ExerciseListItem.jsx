@@ -31,7 +31,7 @@ const ExerciseListItem = ({ ex, onAdd, isAdded }) => {
       ) : (
         <button
           onClick={onAdd}
-          className="flex items-center justify-center w-8 h-8 bg-purple-500 hover:bg-purple-600 text-white rounded-full text-lg transition shrink-0"
+          className="flex items-center justify-center w-8 h-8 bg-purple-500 hover:bg-purple-600 text-white rounded-full text-lg transition shrink-0 cursor-pointer"
           aria-label="Add Exercise"
         >
           +

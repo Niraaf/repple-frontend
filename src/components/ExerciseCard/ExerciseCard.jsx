@@ -67,10 +67,11 @@ export default function ExerciseCard({ ex, index, onChange, onDelete }) {
                     <div key={field} className="flex justify-between items-center">
                         <span className="text-gray-500">{label}</span>
                         <input
-                            type="number"
-                            min="1"
+                            type="text"
+                            inputMode="numeric"
                             value={value}
                             onChange={(e) => onChange(field, e.target.value)}
+                            onBlur={(e) => onChange(field, parseInt(e.target.value) || "1")}
                             className="w-14 text-center border border-gray-200 rounded focus:ring-1 focus:ring-blue-300 text-[11px] bg-white"
                         />
                     </div>

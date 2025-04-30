@@ -1,12 +1,15 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/authContext";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { doCreateUserWithEmailAndPassword, handleGoogleAuthSmart } from "@/firebase/auth";
 
 const Register = () => {
+    const { currentUser, userLoggedIn } = useAuth();
     const router = useRouter();
+    const [shouldRedirect, setShouldRedirect] = useState(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -52,6 +55,29 @@ const Register = () => {
             }
         }
     };
+
+    useEffect(() => {
+        if (currentUser && !currentUser.isAnonymous && userLoggedIn) {
+            setShouldRedirect(true); // show "Already logged in"
+            const timer = setTimeout(() => {
+                router.push("/");
+            }, 1500);
+            return () => clearTimeout(timer);
+        }
+    }, [currentUser, userLoggedIn]);
+
+    if (shouldRedirect) {
+        return (
+            <div className="flex justify-center items-center min-h-screen">
+                <div className="flex flex-col items-center justify-center p-10 rounded-lg shadow-lg w-full max-w-md bg-white/50 border-4 border-b-0 border-white/40">
+                    <h1 className="w-full h-full text-3xl font-semibold text-center text-gray-700 mb-4">
+                        Already logged in.
+                    </h1>
+                    <p className="text-gray-500 font-bold text-lg animate-pulse">Redirecting...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="flex justify-center items-center min-h-screen pt-15 md:p-0">

@@ -2,6 +2,7 @@
 
 import "./globals.css";
 import { AuthProvider } from "@/contexts/authContext";
+import { UnsavedChangesProvider } from "@/contexts/unsavedChangesContext";
 import Header from "@/components/Header/Header";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Space_Mono } from 'next/font/google';
@@ -30,8 +31,10 @@ export default function RootLayout({ children }) {
                 {/* Main Content */}
                 <AuthProvider>
                     <QueryClientProvider client={queryClient}>
-                        <Header />
-                        {children}
+                        <UnsavedChangesProvider>
+                            <Header />
+                            {children}
+                        </UnsavedChangesProvider>
                     </QueryClientProvider>
                 </AuthProvider>
             </body>

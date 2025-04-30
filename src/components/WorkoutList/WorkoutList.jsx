@@ -9,7 +9,7 @@ export default function WorkoutList() {
 
     const {
         data: workouts,
-        isLoading,
+        isPending: isLoading,
         isError,
         refetch,
     } = useUserWorkouts();
@@ -26,10 +26,10 @@ export default function WorkoutList() {
         <div className="flex flex-col items-center gap-6 min-h-screen p-6 pt-30 w-full">
             {/* 🚀 Title */}
             <div className="text-center">
-                <h1 className="text-5xl font-extrabold tracking-tight mb-2">
+                <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight mb-2">
                     Choose your Workout
                 </h1>
-                <p className="text-gray-400 text-sm">Select a workout to view and start your session!</p>
+                <p className="text-gray-400 text-xs md:text-sm">Select a workout to view and start your session!</p>
             </div>
 
             {/* Loading */}

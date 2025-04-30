@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import isEqual from "fast-deep-equal";
 import {
   DndContext,
   closestCenter,
@@ -24,30 +25,57 @@ import ExerciseModal from "../ExerciseModal/ExerciseModal";
 import { useWorkoutDetails } from "@/hooks/useWorkoutDetails";
 import { useSaveWorkout } from "@/hooks/useSaveWorkout";
 import { useRouter } from "next/navigation";
+import { useUnsavedChanges } from "@/contexts/unsavedChangesContext";
+import { useUnsavedChangesWarning } from "@/hooks/useUnsavedChangesWarning";
 
 export default function WorkoutBuilder({ workoutId }) {
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [workoutName, setWorkoutName] = useState("Untitled Workout");
   const [exercises, setExercises] = useState([]);
-  const { mutate: saveWorkout, isPending: isSaving } = useSaveWorkout();
+
+  const [initialWorkoutName, setInitialWorkoutName] = useState("Untitled Workout");
+  const [initialExercises, setInitialExercises] = useState([]);
+
+  const { hasUnsavedChanges, setHasUnsavedChanges } = useUnsavedChanges();
+  const { mutate: saveWorkout, isPending: isSaving, isError: isSaveError } = useSaveWorkout();
+  useUnsavedChangesWarning();
 
   const {
     data,
-    isLoading,
+    isPending: isLoading,
     isError,
   } = useWorkoutDetails(workoutId);
 
   useEffect(() => {
     if (data?.exercises) {
       setExercises(data.exercises);
+      setInitialExercises(data.exercises);
       setWorkoutName(data.workout_name || "Untitled Workout");
+      setInitialWorkoutName(data.workout_name || "Untitled Workout");
     }
   }, [data]);
 
-  const handleSaveWorkout = () => {
+  const sanitizeExercise = (exercise) => {
+    const fieldsToSanitize = ["sets", "reps", "rest_between_exercise", "rest_between_sets"];
+    const cleaned = { ...exercise };
+
+    fieldsToSanitize.forEach((field) => {
+      const parsed = parseInt(exercise[field]);
+      cleaned[field] = isNaN(parsed) ? 1 : Math.min(Math.max(parsed, 1), 999);
+    });
+
+    return cleaned;
+  };
+
+  const handleSaveWorkout = async () => {
     if (isSaving) return;
-    saveWorkout({ workoutId, workoutName, exercises });
+    const sanitizedExercises = exercises.map(sanitizeExercise);
+    await saveWorkout({ workoutId, workoutName, exercises: sanitizedExercises });
+    if (!isSaveError) {
+      setHasUnsavedChanges(false);
+      router.push(`/workouts/${workoutId}`);
+    }
   };
 
   const sensors = useSensors(
@@ -88,6 +116,12 @@ export default function WorkoutBuilder({ workoutId }) {
     ]);
   };
 
+  useEffect(() => {
+    const changed =
+      workoutName !== initialWorkoutName || !isEqual(exercises, initialExercises);
+    setHasUnsavedChanges(changed);
+  }, [workoutName, exercises, initialWorkoutName, initialExercises]);
+
   const handleDeleteExercise = (id) => {
     setExercises((prev) => prev.filter((ex) => (ex.id || ex.tempId) !== id));
   };
@@ -99,19 +133,15 @@ export default function WorkoutBuilder({ workoutId }) {
   const handleExerciseChange = (index, field, value) => {
     setExercises(prev => {
       const updated = [...prev];
+      const updatedExercise = { ...updated[index] };
+      console.log(value);
+      const converted = String(value).replace(/[^0-9]/g, '');
 
-      // Remove leading zeros & parse number
-      let numericValue = parseInt(value.replace(/^0+/, ''), 10);
-
-      // Handle NaN edge case + clamp to range
-      if (isNaN(numericValue)) numericValue = 0;
-      numericValue = Math.min(numericValue, 999);
-
-      updated[index][field] = numericValue;
+      updatedExercise[field] = converted === "" ? "" : Math.min(Math.max(1, parseInt(converted)), 999);
+      updated[index] = updatedExercise;
       return updated;
     });
   };
-
 
   return (
     <DndContext
@@ -125,7 +155,6 @@ export default function WorkoutBuilder({ workoutId }) {
         strategy={rectSortingStrategy}
       >
         <div className="flex flex-col items-center w-full min-h-screen p-10 pt-30">
-
           {/* Header */}
           {!isLoading && !isError && (
             <div className="w-full max-w-5xl mb-2">
@@ -134,28 +163,37 @@ export default function WorkoutBuilder({ workoutId }) {
                 value={workoutName}
                 onChange={(e) => setWorkoutName(e.target.value)}
                 placeholder="Name your workout..."
-                className="text-5xl font-extrabold tracking-tight text-gray-800 bg-transparent text-center focus:outline-none placeholder-gray-300 w-full"
+                className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-gray-800 bg-transparent text-center focus:outline-none placeholder-gray-300 w-full"
               />
             </div>
           )}
 
           {/* Action Buttons - Clean & Centered */}
           {!isLoading && !isError && (
-            <div className="flex justify-center gap-4 max-w-5xl text-sm md:text-base mb-6">
-              <button
-                onClick={handleOpenModal}
-                className="bg-white/30 hover:bg-white/50 font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer"
-              >
-                ➕ Add Exercise
-              </button>
-              <button
-                onClick={handleSaveWorkout}
-                className="bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 
+            <div className="flex flex-col md:flex-row justify-center gap-4 max-w-5xl text-sm md:text-base mb-10 relative">
+              <div className="flex gap-4">
+                <button
+                  onClick={handleOpenModal}
+                  className="bg-white/30 hover:bg-white/50 font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer"
+                >
+                  ➕ Add Exercise
+                </button>
+                <button
+                  onClick={handleSaveWorkout}
+                  className="bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 
                   text-white font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer"
-                disabled={isSaving}
-              >
-                {isSaving ? "💾 Saving Workout..." : "💾 Save Workout"}
-              </button>
+                  disabled={isSaving}
+                >
+                  {isSaving ? "💾 Saving Workout..." : "💾 Save Workout"}
+                </button>
+              </div>
+              {hasUnsavedChanges && (
+                <div className="flex items-center justify-center">
+                  <div className="px-5 py-2 bg-yellow-100 text-yellow-800 font-bold rounded-full shadow-md text-sm md:text-base animate-pulse">
+                    ⚠️ Unsaved changes
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
