@@ -1,8 +1,8 @@
 export default function DeleteModal({ onConfirm, onCancel }) {
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-md" onClick={onCancel}>
+        <div className="fixed inset-0 z-40 bg-black/10 backdrop-blur-sm flex justify-center items-center " onClick={onCancel}>
             <div
-                className="bg-white/30 hover:bg-white/50 border-4 border-b-0 border-white/30 p-8 rounded-xl shadow-xl max-w-sm w-[90%] relative animate-fade-in"
+                className="bg-white/50 border-4 border-b-0 border-white/30 p-8 rounded-xl shadow-xl max-w-sm w-[90%] relative animate-fade-in"
                 onClick={(e) => e.stopPropagation()}
             >
                 <h2 className="text-lg font-bold mb-4 text-gray-800 text-center">Delete this workout?</h2>

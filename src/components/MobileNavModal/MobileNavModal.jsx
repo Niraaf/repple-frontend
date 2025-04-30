@@ -5,7 +5,7 @@ import Link from "next/link";
 export default function MobileNavModal({ onClose, userLoggedIn, currentUser, handleSignOut }) {
     return (
         <div
-            className="fixed inset-0 z-40 backdrop-blur-sm flex justify-center items-center"
+            className="fixed inset-0 z-40 bg-black/10 backdrop-blur-sm flex justify-center items-center"
             onClick={onClose}
         >
             <div

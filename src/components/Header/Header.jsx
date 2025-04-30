@@ -12,7 +12,6 @@ export default function Header() {
     const [menuOpen, setMenuOpen] = useState(false);
     const [isSigningOut, setIsSigningOut] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
-    const [visible, setVisible] = useState(true);
 
     const router = useRouter();
     const pathname = usePathname();
@@ -35,8 +34,8 @@ export default function Header() {
         if (!isSigningOut) {
             setIsSigningOut(true);
             try {
+                router.push("/");
                 await doSignOut();
-                window.location.href = "/";
             } catch (err) {
                 console.error(err);
             } finally {

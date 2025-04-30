@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { doCreateUserWithEmailAndPassword, handleGoogleAuthSmart } from "@/firebase/auth";
 
 const Register = () => {
+    const router = useRouter();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -25,7 +27,7 @@ const Register = () => {
 
             try {
                 await doCreateUserWithEmailAndPassword(email, password);
-                //window.location.href = "/";
+                router.push("/");
             } catch (err) {
                 setError(err.message);
             } finally {
@@ -38,20 +40,26 @@ const Register = () => {
         e.preventDefault();
         if (!isRegistering) {
             setIsRegistering(true);
-            await handleGoogleAuthSmart()
-                //.then(() => window.location.href = "/")
-                .catch((err) => setError(err.message))
-                .finally(() => setIsRegistering(false));
+            setError(null);
+
+            try {
+                await handleGoogleAuthSmart();
+                router.push("/");
+            } catch (err) {
+                setError(err.message);
+            } finally {
+                setIsRegistering(false);
+            }
         }
     };
 
     return (
-        <div className="flex justify-center items-center min-h-screen">
-            <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-                <h2 className="text-2xl font-semibold text-center text-gray-700 mb-6">Register</h2>
-                <form onSubmit={onSubmit}>
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-600" htmlFor="email">
+        <div className="flex justify-center items-center min-h-screen pt-15 md:p-0">
+            <div className="bg-white/30 border-4 border-b-0 border-white/30 p-8 rounded-lg shadow-lg w-[90%] max-w-md my-5">
+                <h2 className="text-xl md:text-3xl font-semibold text-center text-gray-700 mb-2 md:mb-6">Register</h2>
+                <form onSubmit={onSubmit} className="space-y-1 md:space-y-4">
+                    <div>
+                        <label className="block text-xs md:text-sm font-medium text-gray-600" htmlFor="email">
                             Email
                         </label>
                         <input
@@ -60,12 +68,12 @@ const Register = () => {
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
-                            className="w-full px-4 py-2 mt-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            className="w-full px-4 py-1 md:py-2 mt-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
                         />
                     </div>
 
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-600" htmlFor="password">
+                    <div>
+                        <label className="block text-xs md:text-sm font-medium text-gray-600" htmlFor="password">
                             Password
                         </label>
                         <input
@@ -74,12 +82,12 @@ const Register = () => {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
-                            className="w-full px-4 py-2 mt-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            className="w-full px-4 py-1 md:py-2 mt-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
                         />
                     </div>
 
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-600" htmlFor="confirmPassword">
+                    <div>
+                        <label className="block text-xs md:text-sm font-medium text-gray-600" htmlFor="confirmPassword">
                             Confirm Password
                         </label>
                         <input
@@ -88,7 +96,7 @@ const Register = () => {
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                             required
-                            className="w-full px-4 py-2 mt-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            className="w-full px-4 py-1 md:py-2 my-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
                         />
                     </div>
 
@@ -97,23 +105,23 @@ const Register = () => {
                     <button
                         type="submit"
                         disabled={isRegistering}
-                        className="w-full py-2 px-4 mb-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300"
+                        className="w-full py-2 px-4 mb-2 md:mb-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 text-sm md:text-base"
                     >
                         {isRegistering ? "Registering..." : "Register"}
                     </button>
                 </form>
 
-                <div className="text-center my-2 text-gray-500">or</div>
+                <div className="text-center my-1 md:my-2 text-gray-500">or</div>
 
                 <button
                     onClick={onGoogleAuthClick}
                     disabled={isRegistering}
-                    className="w-full py-2 px-4 mb-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:bg-gray-300"
+                    className="w-full py-2 px-4 mb-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:bg-gray-300 text-sm md:text-base"
                 >
                     {isRegistering ? "Signing in with Google..." : "Sign in with Google"}
                 </button>
 
-                <div className="mt-4 text-center text-sm text-gray-600">
+                <div className="text-center text-gray-600 text-xs md:text-base">
                     Already have an account?{" "}
                     <Link href="/login" className="text-blue-600 hover:underline">
                         Login here

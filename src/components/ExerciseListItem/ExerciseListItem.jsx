@@ -1,6 +1,6 @@
 const ExerciseListItem = ({ ex, onAdd, isAdded }) => {
   return (
-    <div className="flex items-center justify-between p-4 bg-white/50 hover:bg-white/70 border-4 border-b-0 border-white/30 rounded-xl hover:shadow-sm transition h-20">
+    <div className="flex items-center justify-between p-4 bg-white/50 hover:bg-white/70 border-4 border-b-0 border-white/30 rounded-xl hover:shadow-sm transition">
 
       {/* Info */}
       <div className="flex flex-col">
@@ -25,13 +25,13 @@ const ExerciseListItem = ({ ex, onAdd, isAdded }) => {
 
       {/* Action */}
       {isAdded ? (
-        <div className="flex items-center justify-center w-8 h-8 bg-green-200 text-green-700 rounded-full text-sm cursor-default">
+        <div className="flex items-center justify-center w-8 h-8 bg-green-200 text-green-700 rounded-full text-sm cursor-default shrink-0">
           ✓
         </div>
       ) : (
         <button
           onClick={onAdd}
-          className="flex items-center justify-center w-8 h-8 bg-purple-500 hover:bg-purple-600 text-white rounded-full text-lg transition"
+          className="flex items-center justify-center w-8 h-8 bg-purple-500 hover:bg-purple-600 text-white rounded-full text-lg transition shrink-0"
           aria-label="Add Exercise"
         >
           +

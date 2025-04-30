@@ -17,53 +17,42 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { restrictToWindowEdges } from "@dnd-kit/modifiers";
-import { useAuth } from "@/contexts/authContext";
 import { v4 as uuidv4 } from 'uuid';
 import ExerciseCard from "../ExerciseCard/ExerciseCard";
 import RestBlock from "../RestBlock/RestBlock";
 import ExerciseModal from "../ExerciseModal/ExerciseModal";
+import { useWorkoutDetails } from "@/hooks/useWorkoutDetails";
+import { useSaveWorkout } from "@/hooks/useSaveWorkout";
+import { useRouter } from "next/navigation";
 
 export default function WorkoutBuilder({ workoutId }) {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const { currentUser } = useAuth();
-  const [exercises, setExercises] = useState([]);
+  const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [workoutName, setWorkoutName] = useState("Untitled Workout");
-  const [saving, setSaving] = useState(false);
+  const [exercises, setExercises] = useState([]);
+  const { mutate: saveWorkout, isPending: isSaving } = useSaveWorkout();
 
-  // Load existing workout only if workoutId exists (Edit Mode)
+  const {
+    data,
+    isLoading,
+    isError,
+  } = useWorkoutDetails(workoutId);
+
   useEffect(() => {
-    const fetchExercises = async () => {
-      setLoading(true);
-      setError(false);
-
-      try {
-        const res = await fetch(`/api/workout/${workoutId}/workout-details`);
-        if (!res.ok) throw new Error("Failed to fetch exercises");
-
-        const data = await res.json();
-        setExercises(data.exercises);
-        setWorkoutName(data.workout_name);
-      } catch (err) {
-        console.error("Error fetching exercises:", err);
-        setError(true);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (currentUser && workoutId) {
-      fetchExercises();
-    } else {
-      setLoading(false);  // No fetch needed
+    if (data?.exercises) {
+      setExercises(data.exercises);
+      setWorkoutName(data.workout_name || "Untitled Workout");
     }
-  }, [currentUser, workoutId]);
+  }, [data]);
 
+  const handleSaveWorkout = () => {
+    if (isSaving) return;
+    saveWorkout({ workoutId, workoutName, exercises });
+  };
 
   const sensors = useSensors(
     useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
-    useSensor(MouseSensor)
+    useSensor(MouseSensor, { activationConstraint: { distance: 5 } })
   );
 
   const getExerciseId = (exercise) => exercise.id || exercise.tempId;
@@ -107,52 +96,6 @@ export default function WorkoutBuilder({ workoutId }) {
     setIsModalOpen(!isModalOpen);
   };
 
-  const getSupabaseUserId = async (firebaseUid) => {
-    const res = await fetch(`/api/user/map-firebase?firebaseUid=${firebaseUid}`);
-    const data = await res.json();
-    return data.userId;  // This is profile.userid (Supabase UUID)
-  };
-
-  // 🔥 Save Workout Button Handler
-  const handleSaveWorkout = async () => {
-    if (!currentUser || saving) return;
-    let savedWorkoutId = workoutId;
-    const supabaseUserId = await getSupabaseUserId(currentUser.uid);
-    setSaving(true);
-    try {
-      // If it's a new workout (no ID), create it first
-      if (!workoutId) {
-        const res = await fetch('/api/workout/create', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: supabaseUserId,
-            name: workoutName || "Untitled Workout",
-            exercises
-          })
-        });
-
-        const data = await res.json();
-        savedWorkoutId = data.workoutId;
-      }
-
-      // Save exercises (bulk)
-      await fetch(`/api/workout/${savedWorkoutId}/save-exercises`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ workoutName: workoutName || "Untitled Workout", exercises })
-      });
-
-      alert("Workout saved successfully!");
-      window.location.href = `/workouts/${savedWorkoutId}`
-    } catch (err) {
-      console.error("Failed to save workout:", err);
-      alert("Error saving workout.");
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const handleExerciseChange = (index, field, value) => {
     setExercises(prev => {
       const updated = [...prev];
@@ -181,11 +124,11 @@ export default function WorkoutBuilder({ workoutId }) {
         items={exercises.map(getExerciseId)}
         strategy={rectSortingStrategy}
       >
-        <div className="flex flex-col items-center w-full min-h-screen pt-30">
+        <div className="flex flex-col items-center w-full min-h-screen p-10 pt-30">
 
           {/* Header */}
-          {!loading && !error && (
-            <div className="w-full max-w-5xl px-6 mb-2">
+          {!isLoading && !isError && (
+            <div className="w-full max-w-5xl mb-2">
               <input
                 type="text"
                 value={workoutName}
@@ -197,8 +140,8 @@ export default function WorkoutBuilder({ workoutId }) {
           )}
 
           {/* Action Buttons - Clean & Centered */}
-          {!loading && !error && (
-            <div className="flex justify-center gap-4 max-w-5xl px-6">
+          {!isLoading && !isError && (
+            <div className="flex justify-center gap-4 max-w-5xl text-sm md:text-base mb-6">
               <button
                 onClick={handleOpenModal}
                 className="bg-white/30 hover:bg-white/50 font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer"
@@ -209,23 +152,23 @@ export default function WorkoutBuilder({ workoutId }) {
                 onClick={handleSaveWorkout}
                 className="bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 
                   text-white font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer"
-                disabled={saving}
+                disabled={isSaving}
               >
-                {saving ? "💾 Saving Workout..." : "💾 Save Workout"}
+                {isSaving ? "💾 Saving Workout..." : "💾 Save Workout"}
               </button>
             </div>
           )}
 
           {/* States */}
-          {loading && <p className="text-gray-400 animate-pulse">Loading your quest...</p>}
-          {error && <p className="text-red-500">Failed to load. Try again, hero!</p>}
+          {isLoading && <p className="text-gray-400 animate-pulse">Loading your workout...</p>}
+          {isError && <p className="text-red-500">Failed to load. Try again!</p>}
 
           {/* Main Content */}
-          {!loading && !error && (
-            <div className="flex flex-col items-center gap-10 p-6 w-full max-w-5xl">
+          {!isLoading && !isError && (
+            <div className="flex flex-col items-center gap-10 w-full max-w-5xl">
 
               {/* Exercise Flow */}
-              <div className="flex flex-wrap justify-center gap-6 rounded-2xl w-full">
+              <div className="flex flex-wrap justify-center gap-6 rounded-2xl w-full px-6">
 
                 {/* Modern Cards */}
                 {exercises.length === 0 ? (

@@ -1,6 +1,6 @@
 export default function RestBlock({ value, onChange }) {
     return (
-        <div className="flex flex-col items-center justify-center gap-1 p-3 bg-yellow-50 border border-yellow-200 rounded-xl shadow-sm w-16">
+        <div className="flex flex-col items-center justify-center gap-1 p-3 bg-yellow-50 border border-yellow-200 rounded-xl shadow-sm">
             <span className="text-sm font-medium text-yellow-600">Rest</span>
             <input
                 type="number"

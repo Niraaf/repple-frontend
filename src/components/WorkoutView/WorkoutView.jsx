@@ -2,39 +2,32 @@
 
 import React, { useEffect, useState } from "react";
 import DeleteModal from "../DeleteModal/DeleteModal";
+import { useWorkoutDetails } from "@/hooks/useWorkoutDetails";
+import { useRouter } from "next/navigation";
+
 export default function WorkoutView({ workoutId }) {
+    const router = useRouter();
     const [exercises, setExercises] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [workoutDetails, setWorkoutDetails] = useState({
-        workoutName: "Untitled Workout",
-        num_exercises: 0,
-        estimated_duration: 0,
-        last_performed: null
-    });
+    const [workoutDetails, setWorkoutDetails] = useState({});
     const [showDeleteModal, setShowDeleteModal] = useState(false);
 
+    const {
+        data,
+        isLoading,
+        isError,
+    } = useWorkoutDetails(workoutId);
+
     useEffect(() => {
-        const fetchWorkoutData = async () => {
-            try {
-                const res = await fetch(`/api/workout/${workoutId}/workout-details`);
-                const data = await res.json();
-
-                setExercises(data.exercises);
-                setWorkoutDetails({
-                    workoutName: data.workout_name,
-                    num_exercises: data.num_exercises,
-                    estimated_duration: data.estimated_duration,
-                    last_performed: data.last_performed
-                });
-            } catch (err) {
-                console.error("Failed to fetch workout data:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchWorkoutData();
-    }, [workoutId]);
+        if (data?.exercises) {
+            setExercises(data.exercises);
+            setWorkoutDetails({
+                workoutName: data.workout_name,
+                num_exercises: data.num_exercises,
+                estimated_duration: data.estimated_duration,
+                last_performed: data.last_performed
+            });
+        }
+    }, [data]);
 
     const sortedExercises = exercises.sort((a, b) => a.sequence - b.sequence);
 
@@ -48,11 +41,11 @@ export default function WorkoutView({ workoutId }) {
     };
 
     const handleStart = () => {
-        window.location.href = `/workouts/${workoutId}/start`
+        router.push(`/workouts/${workoutId}/start`);
     }
 
     const handleEdit = () => {
-        window.location.href = `/workouts/${workoutId}/edit`
+        router.push(`/workouts/${workoutId}/edit`);
     }
 
     const handleDelete = () => {
@@ -81,19 +74,19 @@ export default function WorkoutView({ workoutId }) {
     };
 
     return (
-        <div className="flex flex-col items-center justify-center w-full min-h-screen p-10 pt-30">
+        <div className="flex flex-col items-center w-full min-h-screen p-10 pt-30">
 
-            {loading && <p className="text-gray-400 animate-pulse">Loading your workout details...</p>}
+            {isLoading && <p className="text-gray-400 animate-pulse">Loading your workout details...</p>}
 
-            {!loading &&
+            {!isLoading &&
                 <div className="flex flex-col w-full h-full max-w-5xl">
-                    {/* 🏷️ Quest Header */}
+                    {/* 🏷️ Workout Header */}
                     <div className="mb-8 text-center">
                         <h1 className="text-5xl font-extrabold tracking-tight text-gray-800">
-                            {workoutDetails.workoutName}
+                            {workoutDetails?.workoutName || "Untitled Workout"}
                         </h1>
                         <p className="mt-3 text-sm text-gray-500 italic">
-                            ⏳ {workoutDetails.estimated_duration} mins • 🗡️ {workoutDetails.num_exercises} Tasks • 🕒 Last: {formatLastPerformed(workoutDetails.last_performed)}
+                            ⏳ {workoutDetails?.estimated_duration || 0} mins • 🗡️ {workoutDetails?.num_exercises || 0} Tasks • 🕒 Last: {formatLastPerformed(workoutDetails.last_performed)}
                         </p>
                     </div>
 

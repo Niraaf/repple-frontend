@@ -1,7 +1,7 @@
 import { supabase } from "@/supabase/supabase";
 
 export async function DELETE(req, context) {
-    const { workoutId } = context.params;
+    const { workoutId } = await context.params;
 
     if (!workoutId) {
         return new Response(JSON.stringify({ message: "Workout ID missing" }), { status: 400 });
