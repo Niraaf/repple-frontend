@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/authContext";
 
 const getSupabaseUserId = async (firebaseUid) => {
+    console.log("firebase", firebaseUid);
     const res = await fetch(`/api/user/map-firebase?firebaseUid=${firebaseUid}`);
     const data = await res.json();
     return data.userId;
@@ -16,6 +16,7 @@ const saveWorkout = async ({ workoutId, currentUser, workoutName, exercises }) =
 
     // If no ID, create new workout first
     if (!workoutId) {
+        console.log("NO WORKOUTID", supabaseUserId);
         const res = await fetch("/api/workout/create", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -41,7 +42,7 @@ const saveWorkout = async ({ workoutId, currentUser, workoutName, exercises }) =
 
 export function useSaveWorkout() {
     const queryClient = useQueryClient();
-    const currentUser = useAuth();
+    const { currentUser } = useAuth();
 
     return useMutation({
         mutationFn: ({ workoutId, workoutName, exercises }) =>

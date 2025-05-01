@@ -38,14 +38,18 @@ export default function WorkoutBuilder({ workoutId }) {
   const [initialExercises, setInitialExercises] = useState([]);
 
   const { hasUnsavedChanges, setHasUnsavedChanges } = useUnsavedChanges();
-  const { mutate: saveWorkout, isPending: isSaving, isError: isSaveError } = useSaveWorkout();
+  const { mutateAsync: saveWorkout, isPending: isSaving, isError: isSaveError } = useSaveWorkout();
   useUnsavedChangesWarning();
+
+  console.log("yes");
 
   const {
     data,
-    isPending: isLoading,
+    isLoading,
     isError,
   } = useWorkoutDetails(workoutId);
+
+  console.log("uhhh", isLoading);
 
   useEffect(() => {
     if (data?.exercises) {
@@ -71,10 +75,10 @@ export default function WorkoutBuilder({ workoutId }) {
   const handleSaveWorkout = async () => {
     if (isSaving) return;
     const sanitizedExercises = exercises.map(sanitizeExercise);
-    await saveWorkout({ workoutId, workoutName, exercises: sanitizedExercises });
+    const newWorkoutId = await saveWorkout({ workoutId, workoutName, exercises: sanitizedExercises });
     if (!isSaveError) {
       setHasUnsavedChanges(false);
-      router.push(`/workouts/${workoutId}`);
+      router.push(`/workouts/${newWorkoutId}`);
     }
   };
 
