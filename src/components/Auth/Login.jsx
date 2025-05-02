@@ -1,14 +1,14 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import { doSignInWithEmailAndPassword, handleGoogleAuthSmart } from "@/firebase/auth";
+import { doSignInWithEmailAndPassword, handleGoogleAuth } from "@/firebase/auth";
 import { useAuth } from "@/contexts/authContext";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 const Login = () => {
     const router = useRouter();
-    const { currentUser, userLoggedIn } = useAuth();
+    const { currentUser, userLoggedIn, signInMutex } = useAuth();
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -21,13 +21,16 @@ const Login = () => {
         if (!isSigningIn) {
             setError(null);
             setIsSigningIn(true);
+
             try {
+                signInMutex.current = true;
                 await doSignInWithEmailAndPassword(email, password);
                 router.push("/");
             } catch (err) {
                 setError(err.message);
             } finally {
                 setIsSigningIn(false);
+                signInMutex.current = false;
             }
         }
     };
@@ -39,19 +42,21 @@ const Login = () => {
             setIsSigningIn(true);
 
             try {
-                await handleGoogleAuthSmart();
+                signInMutex.current = true;
+                await handleGoogleAuth();
                 router.push("/");
             } catch (err) {
                 setError(err.message);
             } finally {
                 setIsSigningIn(false);
+                signInMutex.current = false;
             }
         }
     };
 
     useEffect(() => {
         if (currentUser && !currentUser.isAnonymous && userLoggedIn) {
-            setShouldRedirect(true); // show "Already logged in"
+            setShouldRedirect(true);
             const timer = setTimeout(() => {
                 router.push("/");
             }, 1500);

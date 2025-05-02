@@ -157,12 +157,20 @@ export default function WorkoutView({ workoutId }) {
 
                                 {/* Rest Between Exercises */}
                                 {idx < sortedExercises.length - 1 && (
-                                    <div className="flex justify-center">
-                                        <div className="flex items-center gap-2 text-xs text-yellow-600 bg-yellow-50 border border-yellow-200 px-4 py-2 rounded-full shadow-sm">
+                                    <div className="flex justify-center my-3">
+                                        <div
+                                            className="flex items-center gap-2 px-5 py-2 text-sm text-yellow-700 font-medium rounded-xl border-4 border-b-0 border-white/30 shadow-md backdrop-blur-sm"
+                                            style={{
+                                                background: "radial-gradient(circle, rgba(255,255,200,0.3), rgba(255,235,150,0.2))",
+                                                backdropFilter: "blur(12px)",
+                                                WebkitBackdropFilter: "blur(12px)",
+                                            }}
+                                        >
                                             Rest Between Exercise: {ex.rest_between_exercise}s
                                         </div>
                                     </div>
                                 )}
+
                             </React.Fragment>
                         ))}
                     </div>

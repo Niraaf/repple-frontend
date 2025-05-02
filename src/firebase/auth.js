@@ -15,6 +15,9 @@ import {
     linkWithPopup,
     deleteUser,
     onAuthStateChanged,
+    getRedirectResult,
+    linkWithRedirect,
+    signInWithRedirect,
 } from "firebase/auth";
 import { supabase } from "../supabase/supabase";
 
@@ -128,7 +131,7 @@ export const doSignInWithEmailAndPassword = async (email, password) => {
 
 export const doSignInWithGoogle = async () => {
     try {
-        const provider = new GoogleAuthProvider();
+    const provider = new GoogleAuthProvider();
         const userCredential = await signInWithPopup(auth, provider);
         console.log("User signed in with Google:", userCredential.user);
         return userCredential.user;
@@ -138,7 +141,7 @@ export const doSignInWithGoogle = async () => {
     }
 };
 
-export const handleGoogleAuthSmart = async () => {
+export const handleGoogleAuth = async () => {
     const user = auth.currentUser;
 
     if (user && user.isAnonymous) {
@@ -151,26 +154,26 @@ export const handleGoogleAuthSmart = async () => {
 
             return userCredential.user;
 
-        } catch (error) {
+    } catch (error) {
             if (error.code === 'auth/credential-already-in-use') {
                 console.warn("Google account already linked. Using existing credential...");
 
-                const credential = GoogleAuthProvider.credentialFromError(error);
+            const credential = GoogleAuthProvider.credentialFromError(error);
 
-                if (!credential) {
+            if (!credential) {
                     console.error("Failed to extract credential from error.");
-                    throw error;
-                }
+                throw error;
+            }
 
                 await handleDeleteUser(user);
-                
-                const existingUserCredential = await signInWithCredential(auth, credential);
+
+            const existingUserCredential = await signInWithCredential(auth, credential);
                 console.log("Signed into existing Google account:", existingUserCredential.user);
 
-                return existingUserCredential.user;
+            return existingUserCredential.user;
             } else {
                 console.error("Unexpected error during linking:", error);
-                throw error;
+        throw error;
             }
         }
     } else {
@@ -220,7 +223,7 @@ export const doSignInAnonymously = async () => {
 };
 
 const handleDeleteUser = async (user) => {
-    console.log("deleting user ", user.uid);
+    console.log("deleting user", user.uid);
     if (!user) {
         console.warn("No user provided for deletion.");
         return;

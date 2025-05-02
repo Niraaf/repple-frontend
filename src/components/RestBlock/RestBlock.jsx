@@ -1,7 +1,14 @@
-export default function RestBlock({ value, onChange }) {    
+export default function RestBlock({ value, onChange }) {
     return (
-        <div className="flex flex-col items-center justify-center gap-1 p-3 bg-yellow-50 border border-yellow-200 rounded-xl shadow-sm">
-            <span className="text-sm font-medium text-yellow-600">Rest</span>
+        <div
+            className="flex flex-col items-center justify-center gap-1 p-3 border-4 border-b-0 border-white/30 rounded-xl shadow-md"
+            style={{
+                background: "radial-gradient(circle, rgba(255,255,200,0.3), rgba(255,235,150,0.2))",
+                backdropFilter: "blur(12px)",
+                WebkitBackdropFilter: "blur(12px)",
+            }}
+        >
+            <span className="text-sm font-medium text-yellow-700">Rest</span>
             <input
                 type="text"
                 inputMode="numeric"

@@ -3,10 +3,10 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/authContext";
-import { doSignOut } from "@/firebase/auth";
 import { usePathname, useRouter } from 'next/navigation';
 import { useUnsavedChanges } from "@/contexts/unsavedChangesContext";
 import MobileNavModal from "../MobileNavModal/MobileNavModal";
+import { doSignOut } from "@/firebase/auth";
 
 export default function Header() {
     const { userLoggedIn, currentUser } = useAuth();
@@ -73,7 +73,7 @@ export default function Header() {
     return (
         <>
             <header
-                className={`fixed top-0 left-1/2 transform -translate-x-1/2 w-[94%] max-w-5xl px-4 py-3 z-30 rounded-b-4xl backdrop-blur-md 
+                className={`fixed top-0 left-1/2 transform -translate-x-1/2 w-[94%] max-w-6xl px-4 py-3 z-30 rounded-b-4xl backdrop-blur-md 
                     ${isScrolled ? "shadow-lg" : ""} 
                     transition-all duration-300 ease-in-out flex items-center justify-between
                 `}
@@ -94,10 +94,10 @@ export default function Header() {
 
                 {/* MIDDLE - Desktop Nav */}
                 <nav className="hidden md:flex space-x-6 text-sm font-medium text-gray-700">
-                    <button onClick={() => confirmAndNavigate('/')} className="hover:text-blue-500 transition-colors">Home</button>
-                    <button onClick={() => confirmAndNavigate('/workouts')} className="hover:text-blue-500 transition-colors">My Workouts</button>
-                    <button onClick={() => confirmAndNavigate('/history')} className="hover:text-blue-500 transition-colors">History</button>
-                    <button onClick={() => confirmAndNavigate('/profile')} className="hover:text-blue-500 transition-colors">Profile</button>
+                    <button onClick={() => confirmAndNavigate('/')} className="hover:text-blue-500 transition-colors cursor-pointer">Home</button>
+                    <button onClick={() => confirmAndNavigate('/workouts')} className="hover:text-blue-500 transition-colors cursor-pointer">My Workouts</button>
+                    <button onClick={() => confirmAndNavigate('/history')} className="hover:text-blue-500 transition-colors cursor-pointer">History</button>
+                    <button onClick={() => confirmAndNavigate('/profile')} className="hover:text-blue-500 transition-colors cursor-pointer">Profile</button>
                 </nav>
 
                 {/* RIGHT SIDE */}
@@ -108,13 +108,15 @@ export default function Header() {
                             <>
                                 <button
                                     onClick={() => confirmAndNavigate('/login')}
-                                    className="px-3 py-1 text-white bg-blue-500 rounded-full hover:bg-blue-600 transition"
+                                    className="bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 
+                                    text-white font-bold px-5 rounded-full shadow-md transition cursor-pointer"
                                 >
                                     Login
                                 </button>
                                 <button
                                     onClick={() => confirmAndNavigate('/register')}
-                                    className="px-3 py-1 text-white bg-green-500 rounded-full hover:bg-green-600 transition"
+                                    className="bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 
+                                    text-white font-bold px-5 rounded-full shadow-md transition cursor-pointer"
                                 >
                                     Register
                                 </button>

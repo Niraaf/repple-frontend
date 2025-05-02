@@ -4,10 +4,12 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/authContext";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { doCreateUserWithEmailAndPassword, handleGoogleAuthSmart } from "@/firebase/auth";
+import { doCreateUserWithEmailAndPassword, handleGoogleAuth } from "@/firebase/auth";
+import { getRedirectResult } from "firebase/auth";
+import { auth } from "@/firebase/firebase";
 
 const Register = () => {
-    const { currentUser, userLoggedIn } = useAuth();
+    const { currentUser, userLoggedIn, signInMutex } = useAuth();
     const router = useRouter();
     const [shouldRedirect, setShouldRedirect] = useState(false);
     const [email, setEmail] = useState("");
@@ -15,6 +17,14 @@ const Register = () => {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [isRegistering, setIsRegistering] = useState(false);
     const [error, setError] = useState(null);
+
+    useEffect (() => {
+        async function redirResponse () {
+            const response = await getRedirectResult(auth);
+            console.log("WHATS UP RESPONSE", response);
+        }
+        redirResponse();
+    }, [])
 
     const onSubmit = async (e) => {
         e.preventDefault();
@@ -29,12 +39,14 @@ const Register = () => {
             setError(null);
 
             try {
+                signInMutex.current = true;
                 await doCreateUserWithEmailAndPassword(email, password);
                 router.push("/");
             } catch (err) {
                 setError(err.message);
             } finally {
                 setIsRegistering(false);
+                signInMutex.current = false;
             }
         }
     };
@@ -46,12 +58,14 @@ const Register = () => {
             setError(null);
 
             try {
-                await handleGoogleAuthSmart();
+                signInMutex.current = true;
+                await handleGoogleAuth();
                 router.push("/");
             } catch (err) {
                 setError(err.message);
             } finally {
                 setIsRegistering(false);
+                signInMutex.current = false;
             }
         }
     };
