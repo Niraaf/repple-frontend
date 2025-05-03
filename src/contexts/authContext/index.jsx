@@ -3,7 +3,7 @@
 import React, { useEffect, useContext, useState, useRef } from "react";
 import { doSignInAnonymously } from "@/firebase/auth";
 import { auth } from "@/firebase/firebase";
-import { onAuthStateChanged, getRedirectResult } from "firebase/auth";
+import { onAuthStateChanged } from "firebase/auth";
 
 const AuthContext = React.createContext();
 
@@ -19,9 +19,7 @@ export function AuthProvider({ children }) {
     const signInMutex = useRef(false);
     const hasTriedAutoSignIn = useRef(false);
 
-    useEffect(async () => {
-        const response = await getRedirectResult(auth);
-        console.log("async",  response);
+    useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             if (user) {
                 setCurrentUser({ ...user });

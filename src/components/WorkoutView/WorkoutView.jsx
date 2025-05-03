@@ -41,7 +41,7 @@ export default function WorkoutView({ workoutId }) {
     };
 
     const handleStart = () => {
-        router.push(`/workouts/${workoutId}/start`);
+        router.push(`/workouts/${workoutId}/train`);
     }
 
     const handleEdit = () => {

@@ -133,7 +133,7 @@ export default function Header() {
                     </div>
 
                     {/* Mobile Hamburger */}
-                    <button onClick={() => setMenuOpen(true)} className="md:hidden p-2 bg-white/70 rounded-full shadow">
+                    <button onClick={() => setMenuOpen(true)} className="md:hidden px-2 bg-white/70 rounded-full shadow">
                         ☰
                     </button>
                 </div>

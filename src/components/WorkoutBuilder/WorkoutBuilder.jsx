@@ -41,15 +41,11 @@ export default function WorkoutBuilder({ workoutId }) {
   const { mutateAsync: saveWorkout, isPending: isSaving, isError: isSaveError } = useSaveWorkout();
   useUnsavedChangesWarning();
 
-  console.log("yes");
-
   const {
     data,
     isLoading,
     isError,
   } = useWorkoutDetails(workoutId);
-
-  console.log("uhhh", isLoading);
 
   useEffect(() => {
     if (data?.exercises) {
@@ -74,6 +70,7 @@ export default function WorkoutBuilder({ workoutId }) {
 
   const handleSaveWorkout = async () => {
     if (isSaving) return;
+    if (exercises.length === 0) return window.alert("You need at least 1 exercise to save!")
     const sanitizedExercises = exercises.map(sanitizeExercise);
     const newWorkoutId = await saveWorkout({ workoutId, workoutName, exercises: sanitizedExercises });
     if (!isSaveError) {

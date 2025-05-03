@@ -18,14 +18,6 @@ const Register = () => {
     const [isRegistering, setIsRegistering] = useState(false);
     const [error, setError] = useState(null);
 
-    useEffect (() => {
-        async function redirResponse () {
-            const response = await getRedirectResult(auth);
-            console.log("WHATS UP RESPONSE", response);
-        }
-        redirResponse();
-    }, [])
-
     const onSubmit = async (e) => {
         e.preventDefault();
 

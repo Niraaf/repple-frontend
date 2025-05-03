@@ -6,7 +6,6 @@ import { doSignInAnonymously } from "@/firebase/auth";
 
 export default function Home() {
     const { currentUser } = useAuth();
-    const hasAutoSignedIn = useRef(false);
 
     return (
         <div>

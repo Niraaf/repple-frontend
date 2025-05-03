@@ -137,12 +137,10 @@ export const handleGoogleAuth = async () => {
 
         try {
             // Try linking guest to Google account
-            await linkWithRedirect(user, provider);
 
-            //const userCredential = await linkWithPopup(user, provider);
-            //console.log("Guest linked with Google:", userCredential.user);
-
-            //return userCredential.user;
+            const userCredential = await linkWithPopup(user, provider);
+            console.log("Guest linked with Google:", userCredential.user);
+            return userCredential.user;
 
         } catch (error) {
             if (error.code === 'auth/credential-already-in-use') {
