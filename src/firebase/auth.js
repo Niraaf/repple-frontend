@@ -129,56 +129,53 @@ export const doSignInWithEmailAndPassword = async (email, password) => {
     }
 };
 
-export const doSignInWithGoogle = async () => {
-    try {
-    const provider = new GoogleAuthProvider();
-        const userCredential = await signInWithPopup(auth, provider);
-        console.log("User signed in with Google:", userCredential.user);
-        return userCredential.user;
-    } catch (error) {
-        console.error("Error with Google sign-in:", error);
-        throw error;
-    }
-};
-
 export const handleGoogleAuth = async () => {
     const user = auth.currentUser;
+    const provider = new GoogleAuthProvider();
 
     if (user && user.isAnonymous) {
-        const provider = new GoogleAuthProvider();
 
         try {
             // Try linking guest to Google account
-            const userCredential = await linkWithPopup(user, provider);
-            console.log("Guest linked with Google:", userCredential.user);
+            await linkWithRedirect(user, provider);
 
-            return userCredential.user;
+            //const userCredential = await linkWithPopup(user, provider);
+            //console.log("Guest linked with Google:", userCredential.user);
 
-    } catch (error) {
+            //return userCredential.user;
+
+        } catch (error) {
             if (error.code === 'auth/credential-already-in-use') {
                 console.warn("Google account already linked. Using existing credential...");
 
-            const credential = GoogleAuthProvider.credentialFromError(error);
+                const credential = GoogleAuthProvider.credentialFromError(error);
 
-            if (!credential) {
+                if (!credential) {
                     console.error("Failed to extract credential from error.");
-                throw error;
-            }
+                    throw error;
+                }
 
                 await handleDeleteUser(user);
 
-            const existingUserCredential = await signInWithCredential(auth, credential);
+                const existingUserCredential = await signInWithCredential(auth, credential);
                 console.log("Signed into existing Google account:", existingUserCredential.user);
 
-            return existingUserCredential.user;
+                return existingUserCredential.user;
             } else {
                 console.error("Unexpected error during linking:", error);
-        throw error;
+                throw error;
             }
         }
     } else {
         // Not a guest — regular sign in with popup
-        return await doSignInWithGoogle();
+        try {
+            const userCredential = await signInWithPopup(auth, provider);
+            console.log("User signed in with Google:", userCredential.user);
+            return userCredential.user;
+        } catch (error) {
+            console.error("Error with Google sign-in:", error);
+            throw error;
+        }
     }
 };
 
