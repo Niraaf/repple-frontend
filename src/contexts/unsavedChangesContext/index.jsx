@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
+import { useBlobTheme } from '@/hooks/useBlobTheme';
 
 const UnsavedChangesContext = createContext();
 

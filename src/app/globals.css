@@ -107,3 +107,86 @@
 .animate-float-slower {
     animation: float-slower 10s ease-in-out infinite;
 }
+
+
+/* Default Gradient Layer */
+.bg-gradient-default {
+    background-image: linear-gradient(to top right, #fecaca, #bbf7d0);
+    /* red-green */
+    opacity: 1;
+    transition: opacity 0.7s ease;
+}
+
+body.repple-rest .bg-gradient-default,
+body.repple-exercise .bg-gradient-default {
+    opacity: 0;
+}
+
+.bg-gradient-rest {
+    background-image: linear-gradient(to top right, #bbf7d0, #bfdbfe);
+    /* blue-green */
+    opacity: 0;
+    transition: opacity 0.7s ease;
+}
+
+body.repple-rest .bg-gradient-rest {
+    opacity: 1;
+}
+
+.bg-gradient-exercise {
+    background-image: linear-gradient(to top right, #ddd6fe, #fde68a);
+    /* violet-yellow */
+    opacity: 0;
+    transition: opacity 0.7s ease;
+}
+
+body.repple-exercise .bg-gradient-exercise {
+    opacity: 1;
+}
+
+
+/* === 🫧 INDIVIDUAL BLOBS === */
+body.repple-default .bg-blob-1 {
+    background-color: #d8b4fe;
+    /* purple-300 */
+}
+
+body.repple-default .bg-blob-2 {
+    background-color: #bae6fd;
+    /* blue-200 */
+}
+
+body.repple-default .bg-blob-3 {
+    background-color: #fbcfe8;
+    /* pink-300 */
+}
+
+body.repple-exercise .bg-blob-1 {
+    background-color: #c084fc;
+    /* violet-400 */
+}
+
+body.repple-exercise .bg-blob-2 {
+    background-color: #fde68a;
+    /* yellow-300 */
+}
+
+body.repple-exercise .bg-blob-3 {
+    background-color: #facc15;
+    /* yellow-400 */
+}
+
+body.repple-rest .bg-blob-1 {
+    background-color: #93c5fd;
+    /* blue-300 */
+}
+
+body.repple-rest .bg-blob-2 {
+    background-color: #a7f3d0;
+    /* green-200 */
+}
+
+body.repple-rest .bg-blob-3 {
+    background-color: #bfdbfe;
+    /* blue-100 */
+}

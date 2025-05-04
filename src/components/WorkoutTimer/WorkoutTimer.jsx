@@ -2,6 +2,7 @@
 
 import { useWorkoutDetails } from "@/hooks/useWorkoutDetails";
 import { useEffect, useState } from "react";
+import { useBlobTheme } from "@/hooks/useBlobTheme";
 
 export default function WorkoutTimer({ workoutId }) {
     const [exercises, setExercises] = useState([]);
@@ -13,9 +14,10 @@ export default function WorkoutTimer({ workoutId }) {
     const [logOpen, setLogOpen] = useState(false);
 
     const [seconds, setSeconds] = useState(0);
-    const [running, setRunning] = useState(true);
+    const [running, setRunning] = useState(false);
     const [startTime, setStartTime] = useState(Date.now());
-    const [phase, setPhase] = useState("exercise"); // exercise || rest
+    const [phase, setPhase] = useState("default"); // exercise || rest || default
+    useBlobTheme(phase);
 
     const [sessionLog, setSessionLog] = useState([]);
 
@@ -71,6 +73,12 @@ export default function WorkoutTimer({ workoutId }) {
             .toString()
             .padStart(2, "0")}`;
     };
+
+    const startWorkout = () => {
+        setRunning(true);
+        setPhase("exercise");
+        setStartTime(Date.now());
+    }
 
     // Finish an exercise, go into rest
     const completeExercise = () => {
@@ -174,28 +182,30 @@ export default function WorkoutTimer({ workoutId }) {
                             {formatTime(seconds)}
                         </h1>
 
-                        {phase === "exercise" ? (
-                            <p className="mt-2 text-sm md:text-lg text-gray-700 font-medium">
-                                {current.name} – Set {currentSet + 1} of {current.sets}
-                            </p>
-                        ) : (
+                        {phase === "rest" ? (
+
                             <p className="mt-2 text-sm md:text-lg text-blue-600 italic font-medium">
                                 ⏳ Resting... (Target: {targetRestTime}s)
+                            </p>
+                        ) : (
+                            <p className="mt-2 text-sm md:text-lg text-gray-700 font-medium">
+                                {current.name} – Set {currentSet + 1} of {current.sets}
                             </p>
                         )}
 
                         {/* 🚀 Main Action Button */}
                         <button
-                            onClick={phase === "exercise" ? completeExercise : completeRest}
+                            onClick={phase === "exercise" ? completeExercise : phase === "rest" ? completeRest : startWorkout}
                             className={`mt-8 px-4 md:px-8 py-4 rounded-2xl text-white font-semibold text-xs md:text-base tracking-wide transition shadow-md backdrop-blur-md cursor-pointer
-                                ${phase === "exercise"
-                                ? "bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 "
-                                : "bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600"
+                                ${phase === "rest"
+                                    ? "bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600"
+                                    : "bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 "
                                 }`}
                         >
                             {phase === "exercise"
                                 ? "✅ Done with this exercise"
-                                : "🚀 Done resting — Next exercise"}
+                                : phase === "rest" ? "🚀 Done resting — Next exercise"
+                                    : "Start Workout"}
                         </button>
                     </div>
                 </div>
@@ -213,7 +223,7 @@ export default function WorkoutTimer({ workoutId }) {
             {/* 📝 Log Popup Panel */}
             {logOpen && (
                 <div className="fixed inset-0 bg-black/30 backdrop-blur-md z-50 flex justify-center items-end sm:items-center" onClick={() => setLogOpen(false)}>
-                    <div className="w-full sm:max-w-lg bg-white/50 border-4 border-b-0 border-white/30 rounded-t-3xl sm:rounded-2xl shadow-xl p-6 max-h-[80vh] overflow-y-auto animate-slide-up" onClick={(e) => e.stopPropagation()}>
+                    <div className="w-full sm:max-w-lg bg-white/50 border-4 border-b-0 border-white/30 rounded-t-3xl sm:rounded-2xl shadow-xl p-6 h-[80vh] overflow-y-auto animate-slide-up" onClick={(e) => e.stopPropagation()}>
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-lg font-bold text-gray-800">🗂️ Session Log</h2>
                             <button
@@ -229,8 +239,8 @@ export default function WorkoutTimer({ workoutId }) {
                                 <div
                                     key={i}
                                     className={`flex items-center justify-between px-4 py-3 rounded-xl transition-all border-4 border-b-0 border-white/30 ${entry.type === "exercise"
-                                            ? "bg-green-100/50 hover:bg-green-200/60"
-                                            : "bg-blue-100/50 hover:bg-blue-200/60"
+                                        ? "bg-green-100/50 hover:bg-green-200/60"
+                                        : "bg-blue-100/50 hover:bg-blue-200/60"
                                         }`}
                                 >
                                     <div className="flex flex-col">
