@@ -135,7 +135,6 @@ export default function WorkoutBuilder({ workoutId }) {
     setExercises(prev => {
       const updated = [...prev];
       const updatedExercise = { ...updated[index] };
-      console.log(value);
       const converted = String(value).replace(/[^0-9]/g, '');
 
       updatedExercise[field] = converted === "" ? "" : Math.min(Math.max(1, parseInt(converted)), 999);

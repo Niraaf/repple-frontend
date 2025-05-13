@@ -8,11 +8,8 @@ export function useBlobTheme(theme) { // "default" | "exercise" | "rest"
         if (typeof window === "undefined") return;
 
         // ✅ force default theme if not on trainer/workout routes
-        const isWorkoutPage =
-            pathname.endsWith("/train");
-        console.log(isWorkoutPage);
 
-        const appliedTheme = isWorkoutPage ? theme : "default";
+        const appliedTheme = theme;
 
         document.body.classList.remove("repple-default", "repple-exercise", "repple-rest");
         document.body.classList.add(`repple-${appliedTheme}`);
