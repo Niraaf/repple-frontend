@@ -10,7 +10,7 @@ export default function Home() {
             {/* 🧭 Header */}
             <header className="max-w-7xl w-full mx-auto">
                 <h1 className="text-5xl font-extrabold text-gray-800 mb-1">Dashboard</h1>
-                <p className="text-gray-500 text-md">Welcome back! Ready to crush another workout?</p>
+                <p className="text-gray-500 text-md">Welcome back! Time to crush another workout!</p>
             </header>
 
             {/* 📊 Main Grid Layout */}
@@ -24,7 +24,7 @@ export default function Home() {
                     />
                     <DashboardCard
                         title="🚀 Quick Start"
-                        description="Jump into a random routine or freestyle session."
+                        description="Jump into your next routine."
                         accent="from-green-300 to-lime-200"
                     />
                     <DashboardCard
