@@ -7,7 +7,7 @@ export function useBlobTheme(theme) { // "default" | "exercise" | "rest"
     useEffect(() => {
         if (typeof window === "undefined") return;
 
-        // ✅ force default theme if not on trainer/workout routes
+        // force default theme if not on trainer/workout routes
 
         const appliedTheme = theme;
 

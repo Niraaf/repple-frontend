@@ -90,7 +90,7 @@ export default function WorkoutView({ workoutId }) {
                         </p>
                     </div>
 
-                    {/* 🎮 Action Buttons */}
+                    {/* Action Buttons */}
                     <div className="flex justify-between items-center mb-8 flex-wrap gap-2">
                         {/* Left: Start Button */}
                         <div>
@@ -157,16 +157,11 @@ export default function WorkoutView({ workoutId }) {
 
                                 {/* Rest Between Exercises */}
                                 {idx < sortedExercises.length - 1 && (
-                                    <div className="flex justify-center my-3">
+                                    <div className="flex justify-center">
                                         <div
-                                            className="flex items-center gap-2 px-5 py-2 text-sm text-yellow-700 font-medium rounded-xl border-4 border-b-0 border-white/30 shadow-md backdrop-blur-sm"
-                                            style={{
-                                                background: "radial-gradient(circle, rgba(255,255,200,0.3), rgba(255,235,150,0.2))",
-                                                backdropFilter: "blur(12px)",
-                                                WebkitBackdropFilter: "blur(12px)",
-                                            }}
+                                            className="flex items-center gap-2 px-5 py-2 text-sm font-medium rounded-xl shadow-md hover:shadow-lg transition bg-white/30 hover:bg-white/50 border-4 border-b-0 border-white/30 relative"
                                         >
-                                            Rest Between Exercise: {ex.rest_between_exercise}s
+                                            {ex.rest_between_exercise}s Rest
                                         </div>
                                     </div>
                                 )}
