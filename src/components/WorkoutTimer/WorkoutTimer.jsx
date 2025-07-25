@@ -185,7 +185,7 @@ export default function WorkoutTimer({ workoutId }) {
                         {phase === "rest" ? (
 
                             <p className="mt-2 text-sm md:text-lg text-blue-600 italic font-medium">
-                                ⏳ Resting... (Target: {targetRestTime}s)
+                                Resting...
                             </p>
                         ) : (
                             <p className="mt-2 text-sm md:text-lg text-gray-700 font-medium">
@@ -204,7 +204,7 @@ export default function WorkoutTimer({ workoutId }) {
                         >
                             {phase === "exercise"
                                 ? "✅ Done with this exercise"
-                                : phase === "rest" ? "🚀 Done resting — Next exercise"
+                                : phase === "rest" ? "Done resting — Next exercise"
                                     : "Start Workout"}
                         </button>
                     </div>
