@@ -22,7 +22,7 @@ import { v4 as uuidv4 } from 'uuid';
 import ExerciseCard from "../ExerciseCard/ExerciseCard";
 import RestBlock from "../RestBlock/RestBlock";
 import ExerciseModal from "../ExerciseModal/ExerciseModal";
-import { useWorkoutDetails } from "@/hooks/useWorkoutDetails";
+import { useGetWorkout } from "@/hooks/useGetWorkout";
 import { useSaveWorkout } from "@/hooks/useSaveWorkout";
 import { useRouter } from "next/navigation";
 import { useUnsavedChanges } from "@/contexts/unsavedChangesContext";
@@ -41,11 +41,7 @@ export default function WorkoutBuilder({ workoutId }) {
   const { mutateAsync: saveWorkout, isPending: isSaving, isError: isSaveError } = useSaveWorkout();
   useUnsavedChangesWarning();
 
-  const {
-    data,
-    isLoading,
-    isError,
-  } = useWorkoutDetails(workoutId);
+  const { data, isLoading, isError } = useGetWorkout(workoutId);
 
   useEffect(() => {
     if (data?.exercises) {

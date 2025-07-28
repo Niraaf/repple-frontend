@@ -2,8 +2,9 @@
 
 import React, { useEffect, useState } from "react";
 import DeleteModal from "../DeleteModal/DeleteModal";
-import { useWorkoutDetails } from "@/hooks/useWorkoutDetails";
+import { useGetWorkout } from "@/hooks/useGetWorkout";
 import { useRouter } from "next/navigation";
+import { useDeleteWorkout } from "@/hooks/useDeleteWorkout";
 
 export default function WorkoutView({ workoutId }) {
     const router = useRouter();
@@ -11,11 +12,9 @@ export default function WorkoutView({ workoutId }) {
     const [workoutDetails, setWorkoutDetails] = useState({});
     const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-    const {
-        data,
-        isPending: isLoading,
-        isError,
-    } = useWorkoutDetails(workoutId);
+    const { data, isPending: isLoading, isError } = useGetWorkout(workoutId);
+
+    const deleteMutation = useDeleteWorkout();
 
     useEffect(() => {
         if (data?.exercises) {
@@ -40,34 +39,18 @@ export default function WorkoutView({ workoutId }) {
         return `${diffDays} days ago`;
     };
 
-    const handleStart = () => {
-        router.push(`/workouts/${workoutId}/train`);
-    }
-
-    const handleEdit = () => {
-        router.push(`/workouts/${workoutId}/edit`);
-    }
-
-    const handleDelete = () => {
-        setShowDeleteModal(true);
-    };
+    const handleStart = () => router.push(`/workouts/${workoutId}/train`);
+    const handleEdit = () => router.push(`/workouts/${workoutId}/edit`);
+    const handleDelete = () => setShowDeleteModal(true);
 
     const confirmDelete = async () => {
         try {
-            const res = await fetch(`/api/workout/${workoutId}/delete`, {
-                method: "DELETE",
-            });
-
-            if (res.ok) {
-                alert("Workout deleted successfully!");
-                window.location.href = "/workouts"; // Redirect
-            } else {
-                const errorData = await res.json();
-                alert(`Failed to delete workout: ${errorData.message}`);
-            }
+            await deleteMutation.mutateAsync(workoutId);
+            alert("Workout deleted successfully!");
+            router.push("/workouts");
         } catch (err) {
             console.error("Error deleting workout:", err);
-            alert("An unexpected error occurred.");
+            alert(`Failed to delete workout: ${err.message}`);
         } finally {
             setShowDeleteModal(false);
         }
@@ -78,7 +61,7 @@ export default function WorkoutView({ workoutId }) {
 
             {isLoading && <p className="text-gray-400 animate-pulse">Loading your workout details...</p>}
 
-            {!isLoading &&
+            {!isLoading && !isError &&
                 <div className="flex flex-col w-full h-full max-w-5xl">
                     {/* 🏷️ Workout Header */}
                     <div className="mb-8 text-center">
@@ -182,5 +165,4 @@ export default function WorkoutView({ workoutId }) {
 
         </div>
     );
-
 }

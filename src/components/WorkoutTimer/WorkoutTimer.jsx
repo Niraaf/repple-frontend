@@ -1,6 +1,6 @@
 "use client";
 
-import { useWorkoutDetails } from "@/hooks/useWorkoutDetails";
+import { useGetWorkout } from "@/hooks/useGetWorkout";
 import { useEffect, useState } from "react";
 import { useBlobTheme } from "@/hooks/useBlobTheme";
 
@@ -25,7 +25,7 @@ export default function WorkoutTimer({ workoutId }) {
         data,
         isPending: isLoading,
         isError,
-    } = useWorkoutDetails(workoutId);
+    } = useGetWorkout(workoutId);
 
     useEffect(() => {
         if (data?.exercises) {

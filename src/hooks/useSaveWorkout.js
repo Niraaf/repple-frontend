@@ -9,35 +9,35 @@ const getSupabaseUserId = async (firebaseUid) => {
 };
 
 const saveWorkout = async ({ workoutId, currentUser, workoutName, exercises }) => {
-    if (!currentUser) throw new Error("No user");
+  if (!currentUser) throw new Error("No user");
 
-    const supabaseUserId = await getSupabaseUserId(currentUser.uid);
-    let savedWorkoutId = workoutId;
+  const supabaseUserId = await getSupabaseUserId(currentUser.uid);
 
-    // If no ID, create new workout first
-    if (!workoutId) {
-        console.log("NO WORKOUTID", supabaseUserId);
-        const res = await fetch("/api/workout/create", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                userId: supabaseUserId,
-                name: workoutName || "Untitled Workout",
-                exercises,
-            }),
-        });
-        const data = await res.json();
-        savedWorkoutId = data.workoutId;
-    }
+  let url = "/api/workout";
+  let method = "POST";
 
-    // Save exercises
-    await fetch(`/api/workout/${savedWorkoutId}/save-exercises`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ workoutName: workoutName || "Untitled Workout", exercises }),
-    });
+  if (workoutId) {
+    url = `/api/workout/${workoutId}`;
+    method = "PUT";
+  }
 
-    return savedWorkoutId;
+  const res = await fetch(url, {
+    method,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      userId: supabaseUserId,
+      workoutName: workoutName || "Untitled Workout",
+      exercises,
+    }),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.message || "Failed to save workout");
+  }
+
+  const data = await res.json();
+  return data.workoutId || workoutId;
 };
 
 export function useSaveWorkout() {

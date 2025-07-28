@@ -23,12 +23,13 @@ function calculateEstimatedDuration(exercises) {
 export async function POST(req) {
     try {
         const body = await req.json();
-        const { userId, name, exercises } = body;
+        const { userId, workoutName, exercises } = body;
 
-        if (!userId || !name) {
+        if (!userId || !workoutName) {
             return new Response(JSON.stringify({ message: "Missing userId or name" }), { status: 400 });
         }
 
+        const name = workoutName;
         const { data, error } = await supabase
             .from('workouts')
             .insert([{
