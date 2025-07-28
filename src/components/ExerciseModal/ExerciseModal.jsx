@@ -17,7 +17,7 @@ const ExerciseModal = ({ onClose, onAddExercise, addedExerciseIds }) => {
   const activeDropdownRef = useRef(null);  // Ref for the open dropdown
   const activeTriggerRef = useRef(null);   // Ref for the button that opened it
 
-  const multiSelectCategories = ['Muscle Group', 'Equipment'];
+  const multiSelectCategories = ['Muscle Group'];
 
   const handleFilterChange = (category, value) => {
     setFilters((prevFilters) => {
@@ -109,7 +109,7 @@ const ExerciseModal = ({ onClose, onAddExercise, addedExerciseIds }) => {
     const fetchData = async () => {
       try {
         const [exerciseRes, filterRes] = await Promise.all([
-          fetch('/api/exercises/all'),
+          fetch('/api/exercises'),
           fetch('/api/exercises/filters')
         ]);
 
@@ -151,7 +151,7 @@ const ExerciseModal = ({ onClose, onAddExercise, addedExerciseIds }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/10 backdrop-blur-sm" onClick={onClose}>
       <div className="flex flex-col items-center bg-white/50 border-4 border-b-0 border-white/30 rounded-3xl shadow-2xl p-8 relative w-[90%] max-w-5xl h-[90%] animate-fade-in" onClick={(e) => e.stopPropagation()}>
-        
+
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -179,9 +179,9 @@ const ExerciseModal = ({ onClose, onAddExercise, addedExerciseIds }) => {
         {/* Active Filters */}
         {Object.values(filters).some(val => val && (Array.isArray(val) ? val.length > 0 : true)) && (
           <div className="flex flex-wrap gap-2 mb-2">
-            {Object.entries(filters).map(([category, selected]) => (
+            {Object.entries(filters).map(([category, selected]) =>
               Array.isArray(selected) ? (
-                selected.map(option => (
+                selected.filter(Boolean).map(option => (
                   <button
                     key={`${category}-${option}`}
                     className="flex items-center bg-purple-100 text-purple-700 text-xs px-3 py-1 rounded-full hover:bg-purple-200 transition"
@@ -191,15 +191,17 @@ const ExerciseModal = ({ onClose, onAddExercise, addedExerciseIds }) => {
                   </button>
                 ))
               ) : (
-                <button
-                  key={`${category}-${selected}`}
-                  className="flex items-center bg-purple-100 text-purple-700 text-xs px-3 py-1 rounded-full hover:bg-purple-200 transition"
-                  onClick={() => handleRemoveFilter(category)}
-                >
-                  {selected} <span className="ml-1">✕</span>
-                </button>
+                selected && (
+                  <button
+                    key={`${category}-${selected}`}
+                    className="flex items-center bg-purple-100 text-purple-700 text-xs px-3 py-1 rounded-full hover:bg-purple-200 transition"
+                    onClick={() => handleRemoveFilter(category)}
+                  >
+                    {selected} <span className="ml-1">✕</span>
+                  </button>
+                )
               )
-            ))}
+            )}
           </div>
         )}
 
@@ -217,7 +219,7 @@ const ExerciseModal = ({ onClose, onAddExercise, addedExerciseIds }) => {
               {activeDropdown?.label === filter.label && (
                 <div
                   ref={activeDropdownRef}
-                  className={`absolute mt-2 bg-white border border-gray-300 rounded-xl shadow-md w-40 z-20 animate-fade-in ${activeDropdown.alignRight ? 'right-0' : 'left-0'}`}
+                  className={`absolute overflow-hidden mt-2 bg-white border border-gray-300 rounded-xl shadow-md w-40 z-20 animate-fade-in ${activeDropdown.alignRight ? 'right-0' : 'left-0'}`}
                 >
                   {filter.options.map(option => (
                     <button
@@ -225,9 +227,9 @@ const ExerciseModal = ({ onClose, onAddExercise, addedExerciseIds }) => {
                       className={`w-full text-left text-sm px-4 py-2 hover:bg-gray-100 transition ${Array.isArray(filters[filter.label])
                         ? filters[filter.label]?.includes(option)
                         : filters[filter.label] === option
-                        ? 'bg-blue-50 font-semibold'
-                        : ''
-                      }`}
+                          ? 'bg-blue-50 font-semibold'
+                          : ''
+                        }`}
                       onClick={() => handleFilterChange(filter.label, option)}
                     >
                       {option}

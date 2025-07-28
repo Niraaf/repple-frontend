@@ -1,8 +1,7 @@
 import { supabase } from "@/supabase/supabase";
 
-export async function GET(req) {
-    const { searchParams } = new URL(req.url);
-    const userId = searchParams.get('userId');
+export async function GET(req, context) {
+    const { userId } = await context.params;
 
     if (!userId) {
         return new Response(JSON.stringify({ message: 'Missing userId' }), { status: 400 });
