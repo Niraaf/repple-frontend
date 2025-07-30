@@ -221,20 +221,22 @@ const ExerciseModal = ({ onClose, onAddExercise, addedExerciseIds }) => {
                   ref={activeDropdownRef}
                   className={`absolute overflow-hidden mt-2 bg-white border border-gray-300 rounded-xl shadow-md w-40 z-20 animate-fade-in ${activeDropdown.alignRight ? 'right-0' : 'left-0'}`}
                 >
-                  {filter.options.map(option => (
-                    <button
-                      key={option}
-                      className={`w-full text-left text-sm px-4 py-2 hover:bg-gray-100 transition ${Array.isArray(filters[filter.label])
-                        ? filters[filter.label]?.includes(option)
-                        : filters[filter.label] === option
-                          ? 'bg-blue-50 font-semibold'
-                          : ''
-                        }`}
-                      onClick={() => handleFilterChange(filter.label, option)}
-                    >
-                      {option}
-                    </button>
-                  ))}
+                  {filter.options.map(option => {
+                    const isSelected = Array.isArray(filters[filter.label])
+                      ? filters[filter.label]?.includes(option)
+                      : filters[filter.label] === option;
+
+                    return (
+                      <button
+                        key={option}
+                        className={`w-full text-left text-sm px-4 py-2 hover:bg-gray-100 transition ${isSelected ? 'bg-blue-50 font-semibold' : ''
+                          }`}
+                        onClick={() => handleFilterChange(filter.label, option)}
+                      >
+                        {option}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>
