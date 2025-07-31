@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/authContext";
 
 const getSupabaseUserId = async (firebaseUid) => {
     console.log("firebase", firebaseUid);
-    const res = await fetch(`/api/user/map-firebase?firebaseUid=${firebaseUid}`);
+    const res = await fetch(`/api/users/map-firebase?firebaseUid=${firebaseUid}`);
     const data = await res.json();
     return data.userId;
 };

@@ -46,7 +46,27 @@ export async function POST(req) {
             return new Response(JSON.stringify({ message: "Failed to create workout" }), { status: 500 });
         }
 
-        return new Response(JSON.stringify({ workoutId: data.id }), { status: 200 });
+        if (Array.isArray(exercises) && exercises.length > 0) {
+            const insertData = exercises.map((ex, idx) => ({
+                workout_id: data.id,
+                name: ex.name,
+                sets: ex.sets,
+                reps: ex.reps,
+                sequence: idx,
+                exercise_definition_id: ex.exercise_definition_id,
+                rest_between_exercise: ex.rest_between_exercise,
+                rest_between_sets: ex.rest_between_sets,
+            }));
+
+            const { error: insertError } = await supabase.from("workout_exercises").insert(insertData);
+
+            if (insertError) {
+                console.error("Error inserting exercises:", insertError);
+                return new Response(JSON.stringify({ message: "Workout created, but failed to save exercises" }), { status: 500 });
+            }
+        }
+
+        return new Response(JSON.stringify({ workoutId: data.id, message: "Workout created successfully!" }), { status: 200 });
     } catch (err) {
         console.error("Server error:", err);
         return new Response(JSON.stringify({ message: "Internal Server Error" }), { status: 500 });
