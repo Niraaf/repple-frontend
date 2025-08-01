@@ -94,7 +94,7 @@ export default function Header() {
 
                 {/* MIDDLE - Desktop Nav */}
                 <nav className="hidden md:flex space-x-6 text-sm font-medium text-gray-700">
-                    <button onClick={() => confirmAndNavigate('/')} className="hover:text-blue-500 transition-colors cursor-pointer">Home</button>
+                    <button onClick={() => confirmAndNavigate('/')} className="hover:text-blue-500 transition-colors cursor-pointer">Dashboard</button>
                     <button onClick={() => confirmAndNavigate('/workouts')} className="hover:text-blue-500 transition-colors cursor-pointer">My Workouts</button>
                     <button onClick={() => confirmAndNavigate('/history')} className="hover:text-blue-500 transition-colors cursor-pointer">History</button>
                     <button onClick={() => confirmAndNavigate('/profile')} className="hover:text-blue-500 transition-colors cursor-pointer">Profile</button>

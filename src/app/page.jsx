@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/contexts/authContext";
 
-export default function Home() {
+export default function Dashboard() {
     const { currentUser } = useAuth();
 
     return (
