@@ -4,7 +4,7 @@ import "./globals.css";
 import { useEffect } from "react";
 import { AuthProvider } from "@/contexts/authContext";
 import { UnsavedChangesProvider } from "@/contexts/unsavedChangesContext";
-import Header from "@/components/Header/Header";
+import Navbar from "@/components/Navbar/Navbar";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Space_Mono } from 'next/font/google';
 import { useBlobTheme } from "@/hooks/useBlobTheme";
@@ -38,7 +38,7 @@ export default function RootLayout({ children }) {
                 <AuthProvider>
                     <QueryClientProvider client={queryClient}>
                         <UnsavedChangesProvider>
-                            <Header />
+                            <Navbar />
                             {children}
                         </UnsavedChangesProvider>
                     </QueryClientProvider>

@@ -8,7 +8,7 @@ import { useUnsavedChanges } from "@/contexts/unsavedChangesContext";
 import MobileNavModal from "../MobileNavModal/MobileNavModal";
 import { doSignOut } from "@/firebase/auth";
 
-export default function Header() {
+export default function Navbar() {
     const { userLoggedIn, currentUser } = useAuth();
     const [menuOpen, setMenuOpen] = useState(false);
     const [isSigningOut, setIsSigningOut] = useState(false);
