@@ -1,23 +1,53 @@
-export default function RestBlock({ value, onChange }) {
+// components/RestBlock/RestBlock.jsx
+
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
+export default function RestBlock({ id, step, index, onChange, onDelete }) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        boxShadow: isDragging ? "0 4px 15px rgba(0,0,0,0.2)" : "0 1px 3px rgba(0,0,0,0.1)",
+        zIndex: isDragging ? "45" : "",
+    };
+
     return (
         <div
-            className="flex flex-col items-center justify-center gap-1 p-3 border-4 border-b-0 border-white/30 rounded-xl shadow-md"
-            style={{
-                background: "radial-gradient(circle, rgba(255,255,200,0.3), rgba(255,235,150,0.2))",
-                backdropFilter: "blur(12px)",
-                WebkitBackdropFilter: "blur(12px)",
-            }}
+            ref={setNodeRef}
+            style={style}
+            className="flex flex-col items-center justify-center w-75 h-60 rounded-xl p-3 bg-yellow-50/50 backdrop-blur-md relative border-4 border-b-0 border-white/30"
         >
-            <span className="text-sm font-medium text-yellow-700">Rest</span>
-            <input
-                type="text"
-                inputMode="numeric"
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-                onBlur={(e) => onChange(parseInt(e.target.value) || "1")}
-                className="remove-arrows w-12 text-center py-1 border border-gray-200 rounded focus:ring-1 focus:ring-yellow-300 text-[11px] bg-white"
-            />
-            <span className="text-[9px] text-gray-400">sec</span>
+            {/* Draggable Handle */}
+            <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing w-full flex justify-center pb-2">
+                <span className="text-sm font-medium text-yellow-800">⏱️ Rest</span>
+            </div>
+
+            {/* Position Badge */}
+            <div className="absolute -top-2 -left-2 bg-yellow-200 text-yellow-800 w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold shadow-sm">
+                {index + 1}
+            </div>
+            
+            {/* Delete Button */}
+            <button
+                onClick={onDelete}
+                className="absolute -top-2 -right-2 text-gray-400 hover:text-red-500 bg-white/50 rounded-full w-6 h-6 flex items-center justify-center text-sm transition"
+            >
+                ✕
+            </button>
+            
+            {/* Input */}
+            <div className="flex items-center gap-2">
+                <input
+                    type="text"
+                    inputMode="numeric"
+                    value={step.target_duration_seconds || ''}
+                    onChange={(e) => onChange('target_duration_seconds', e.target.value)}
+                    className="remove-arrows w-16 text-center py-1 border border-gray-200 rounded-md bg-white"
+                />
+                <span className="text-sm text-gray-500">sec</span>
+            </div>
         </div>
     );
 }
