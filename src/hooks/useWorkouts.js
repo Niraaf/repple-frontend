@@ -1,76 +1,82 @@
 // src/hooks/useWorkouts.js
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/authContext'; // Assuming you still need this for conditional enabling
+import { useAuth } from '@/contexts/authContext';
 
 // =================================================================
-//  1. Query Keys Factory
-//  A central place for managing query keys. Prevents typos and makes invalidation easy.
+//  1. Query Keys Factory (No changes needed)
 // =================================================================
 const workoutsKeys = {
-    all: ['workouts'], // Root key for the entire resource
-    lists: () => [...workoutsKeys.all, 'list'], // Key for lists of workouts
-    list: (filters) => [...workoutsKeys.lists(), { filters }], // Key for a specific, filtered list
-    details: () => [...workoutsKeys.all, 'detail'], // Key for individual workouts
-    detail: (id) => [...workoutsKeys.details(), id], // Key for a specific workout
+    all: ['workouts'],
+    lists: () => [...workoutsKeys.all, 'list'],
+    list: (userId) => [...workoutsKeys.lists(), userId], // Key is now user-specific
+    details: () => [...workoutsKeys.all, 'detail'],
+    detail: (id) => [...workoutsKeys.details(), id],
 };
 
 
 // =================================================================
-//  2. API Service Functions
-//  Clean, async functions that perform the actual fetch requests.
+//  2. API Service Functions (UPDATED FOR DEV AUTH & NEW ROUTES)
+//  These functions now require firebaseUid to be passed.
 // =================================================================
 
-// GET /api/workouts
-const getWorkouts = async () => {
-    const res = await fetch('/api/workouts');
+// GET /api/workouts?firebaseUid=...
+const getWorkouts = async (firebaseUid) => {
+    const res = await fetch(`/api/workouts?firebaseUid=${firebaseUid}`);
     if (!res.ok) throw new Error('Failed to fetch workouts');
     return res.json();
 };
 
-// GET /api/workout/:id
-const getWorkoutById = async (workoutId) => {
-    if (!workoutId) return null; // Don't fetch if there's no ID
-    const res = await fetch(`/api/workout/${workoutId}`);
-    if (!res.ok) throw new Error('Failed to fetch workout details');
+// GET /api/workouts/:id
+const getWorkoutById = async (workoutId, firebaseUid) => {
+    if (!workoutId || !firebaseUid) return null;
+
+    const res = await fetch(`/api/workouts/${workoutId}?firebaseUid=${firebaseUid}`);
+
+    if (!res.ok) {
+        const errorInfo = await res.json();
+        const error = new Error(errorInfo.message || 'An error occurred while fetching the data.');
+        error.status = res.status;
+        throw error;
+    }
+
     return res.json();
 };
 
-// POST /api/workout
-const createWorkout = async (workoutData) => {
-    const res = await fetch('/api/workout', {
+// POST /api/workouts
+const createWorkout = async ({ workoutData, firebaseUid }) => {
+    const res = await fetch('/api/workouts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(workoutData),
+        body: JSON.stringify({ ...workoutData, firebaseUid }),
     });
-    if (!res.ok) throw new Error('Failed to create workout');
+    //if (!res.ok) throw new Error('Failed to create workout');
     return res.json();
 };
 
-// PUT /api/workout/:id
-const updateWorkout = async ({ workoutId, ...workoutData }) => {
-    const res = await fetch(`/api/workout/${workoutId}`, {
+// PUT /api/workouts/:id
+const updateWorkout = async ({ workoutId, workoutData, firebaseUid }) => {
+    const res = await fetch(`/api/workouts/${workoutId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(workoutData),
+        body: JSON.stringify({ ...workoutData, firebaseUid }),
     });
     if (!res.ok) throw new Error('Failed to update workout');
     return res.json();
 };
 
-// DELETE /api/workout/:id
-const deleteWorkout = async (workoutId) => {
-    const res = await fetch(`/api/workout/${workoutId}`, {
+// DELETE /api/workouts/:id
+const deleteWorkout = async ({ workoutId, firebaseUid }) => {
+    const res = await fetch(`/api/workouts/${workoutId}?firebaseUid=${firebaseUid}`, {
         method: 'DELETE',
     });
     if (!res.ok) throw new Error('Failed to delete workout');
-    return true; // Or whatever your API returns on successful delete
+    return true;
 };
 
 
 // =================================================================
-//  3. Custom React Query Hooks
-//  These are the hooks you'll import and use in your components.
+//  3. Custom React Query Hooks (UPDATED)
 // =================================================================
 
 /**
@@ -79,22 +85,27 @@ const deleteWorkout = async (workoutId) => {
 export const useUserWorkouts = () => {
     const { currentUser } = useAuth();
     return useQuery({
-        queryKey: workoutsKeys.lists(),
-        queryFn: getWorkouts,
-        enabled: !!currentUser, // Only run the query if a user is logged in
+        // The query key is now user-specific, so if the user changes, the data will be refetched.
+        queryKey: workoutsKeys.list(currentUser?.uid),
+        // Pass the UID to the fetch function.
+        queryFn: () => getWorkouts(currentUser.uid),
+        // Only run the query if a user is logged in.
+        enabled: !!currentUser,
     });
 };
 
 /**
  * Hook to fetch the details of a single workout by its ID.
- * @param {string} workoutId - The UUID of the workout.
  */
-export const useWorkoutDetails = (workoutId) => {
+export const useWorkoutDetails = (workoutId, options = {}) => {
     const { currentUser } = useAuth();
     return useQuery({
         queryKey: workoutsKeys.detail(workoutId),
-        queryFn: () => getWorkoutById(workoutId),
-        enabled: workoutId !== "new" && !!currentUser 
+        queryFn: () => getWorkoutById(workoutId, currentUser?.uid),
+        // The enabled check now also respects options passed from the component (like router.isReady)
+        enabled: workoutId !== "new" && !!currentUser && (options.enabled ?? true),
+        refetchOnWindowFocus: false,
+        ...options
     });
 };
 
@@ -103,10 +114,14 @@ export const useWorkoutDetails = (workoutId) => {
  */
 export const useCreateWorkout = () => {
     const queryClient = useQueryClient();
+    const { currentUser } = useAuth();
+
     return useMutation({
-        mutationFn: createWorkout,
+        mutationFn: (workoutData) => {
+            if (!currentUser) throw new Error("User not authenticated.");
+            return createWorkout({ workoutData, firebaseUid: currentUser.uid });
+        },
         onSuccess: () => {
-            // When a new workout is created, invalidate the list of workouts to refetch it.
             queryClient.invalidateQueries({ queryKey: workoutsKeys.lists() });
         },
     });
@@ -117,11 +132,15 @@ export const useCreateWorkout = () => {
  */
 export const useUpdateWorkout = () => {
     const queryClient = useQueryClient();
+    const { currentUser } = useAuth();
+
     return useMutation({
-        mutationFn: updateWorkout,
+        mutationFn: ({ workoutId, workoutData }) => {
+            if (!currentUser) throw new Error("User not authenticated.");
+            return updateWorkout({ workoutId, workoutData, firebaseUid: currentUser.uid });
+        },
         onSuccess: (data, variables) => {
             const { workoutId } = variables;
-            // After updating, refetch both the list and the specific detail query for this workout.
             queryClient.invalidateQueries({ queryKey: workoutsKeys.lists() });
             queryClient.invalidateQueries({ queryKey: workoutsKeys.detail(workoutId) });
         },
@@ -133,12 +152,15 @@ export const useUpdateWorkout = () => {
  */
 export const useDeleteWorkout = () => {
     const queryClient = useQueryClient();
+    const { currentUser } = useAuth();
+
     return useMutation({
-        mutationFn: deleteWorkout,
+        mutationFn: (workoutId) => {
+            if (!currentUser) throw new Error("User not authenticated.");
+            return deleteWorkout({ workoutId, firebaseUid: currentUser.uid });
+        },
         onSuccess: (data, workoutId) => {
-            // After deleting, refetch the list.
             queryClient.invalidateQueries({ queryKey: workoutsKeys.lists() });
-            // You can also remove the specific detail query from the cache if you want.
             queryClient.removeQueries({ queryKey: workoutsKeys.detail(workoutId) });
         },
     });

@@ -1,13 +1,13 @@
 "use client";
 
 import "./globals.css";
-import { useEffect } from "react";
 import { AuthProvider } from "@/contexts/authContext";
 import { UnsavedChangesProvider } from "@/contexts/unsavedChangesContext";
 import Navbar from "@/components/Navbar/Navbar";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Space_Mono } from 'next/font/google';
 import { useBlobTheme } from "@/hooks/useBlobTheme";
+import { Toaster } from 'react-hot-toast';
 
 const spaceMono = Space_Mono({
     subsets: ["latin"],
@@ -42,6 +42,7 @@ export default function RootLayout({ children }) {
                             {children}
                         </UnsavedChangesProvider>
                     </QueryClientProvider>
+                    <Toaster position="top-center" reverseOrder={false} />
                 </AuthProvider>
             </body>
         </html>

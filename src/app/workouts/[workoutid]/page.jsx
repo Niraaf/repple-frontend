@@ -1,11 +1,11 @@
 import WorkoutBuilder from "@/components/WorkoutBuilder/WorkoutBuilder";
 
-export default async function EditWorkout({ params }) {
-    const { id } = await params;
+export default async function Workout({ params }) {
+    const { workoutId } = await params;
 
     return (
         <div>
-            <WorkoutBuilder workoutId={id} />
+            <WorkoutBuilder workoutId={workoutId} />
         </div>
     )
 }

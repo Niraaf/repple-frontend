@@ -1,23 +1,26 @@
-// src/components/ExerciseModal/ExerciseModal.jsx
 import React from 'react';
-import { useExerciseLibrary } from '@/hooks/useExerciseLibrary';
-import { useExerciseFilter } from '@/hooks/useExerciseFilter';
+import { useExercises } from '@/hooks/useExercises';
+import { useExerciseFilterOptions } from '@/hooks/useExerciseFilterOptions'; // <-- New Name
+import { useFilteredExercises } from '@/hooks/useFilteredExercises'; // <-- New Name
 import FilterControls from './FilterControls';
 import ExerciseList from './ExerciseList';
 
 export default function ExerciseModal({ onClose, onAddExercise, addedExerciseIds }) {
-    // 1. Fetch the library data. isLoading will be true until the fetch is complete.
-    const { data: libraryData, isLoading, isError } = useExerciseLibrary();
+    // Fetch the two distinct types of data with their own hooks.
+    const { data: exercises, isLoading: isLoadingExercises, isError: isExercisesError } = useExercises();
+    const { data: filterOptions, isLoading: isLoadingFilters, isError: isFiltersError } = useExerciseFilterOptions();
 
-    // 2. Prepare the filter logic. We pass an empty array as a fallback
-    //    to ensure the hook doesn't break during the initial loading render.
-    const { 
-        searchQuery, 
-        setSearchQuery, 
-        activeFilters, 
-        handleFilterChange, 
-        filteredExercises 
-    } = useExerciseFilter(libraryData?.exercises || []);
+    const {
+        searchQuery,
+        setSearchQuery,
+        activeFilters,
+        handleFilterChange,
+        filteredExercises
+    } = useFilteredExercises(exercises); // No need for '|| []' if the hook handles it.
+
+    // Combine loading and error states.
+    const isLoading = isLoadingExercises || isLoadingFilters;
+    const isError = isExercisesError || isFiltersError;
 
     // Helper function to render the content based on the data fetching state
     const renderContent = () => {
@@ -32,7 +35,7 @@ export default function ExerciseModal({ onClose, onAddExercise, addedExerciseIds
         return (
             <>
                 <FilterControls
-                    filterOptions={libraryData.filters}
+                    filterOptions={filterOptions}
                     activeFilters={activeFilters}
                     handleFilterChange={handleFilterChange}
                     searchQuery={searchQuery}

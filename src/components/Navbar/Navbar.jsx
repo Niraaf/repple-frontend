@@ -5,70 +5,84 @@ import Link from "next/link";
 import { useAuth } from "@/contexts/authContext";
 import { usePathname, useRouter } from 'next/navigation';
 import { useUnsavedChanges } from "@/contexts/unsavedChangesContext";
+import { useConfirmationModal } from "@/hooks/useConfirmationModal";
 import MobileNavModal from "../MobileNavModal/MobileNavModal";
-import { doSignOut } from "@/firebase/auth";
 
 export default function Navbar() {
-    const { userLoggedIn, currentUser } = useAuth();
+    const { userLoggedIn, signOut } = useAuth();
+    const { showConfirmation, ConfirmationModalComponent } = useConfirmationModal();
     const [menuOpen, setMenuOpen] = useState(false);
     const [isSigningOut, setIsSigningOut] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
 
     const router = useRouter();
-    const pathname = usePathname();
     const { hasUnsavedChanges, setHasUnsavedChanges } = useUnsavedChanges();
 
-    const confirmAndNavigate = (path) => {
+    const navigateWithConfirmation = async (path) => {
         if (hasUnsavedChanges) {
-            const confirmed = window.confirm("You have unsaved changes. Leave anyway?");
+            const confirmed = await showConfirmation({
+                title: "Unsaved Changes",
+                description: "You have unsaved changes. Are you sure you want to leave?",
+                confirmText: "Leave",
+                confirmVariant: "destructive",
+            });
             if (!confirmed) return;
         }
-        setMenuOpen(false)
+        setMenuOpen(false);
         router.push(path);
     };
 
-    const handleBack = () => {
-        if (pathname === '/' || pathname === '') {
-            confirmAndNavigate('/');
-            return;
+    const handleBack = async () => {
+        if (hasUnsavedChanges) {
+            const confirmed = await showConfirmation({
+                title: "Unsaved Changes",
+                description: "You have unsaved changes. Are you sure you want to go back?",
+                confirmText: "Go Back",
+                confirmVariant: "destructive",
+            });
+            if (confirmed) router.back();
+        } else {
+            router.back();
         }
-
-        const segments = pathname.split('/').filter(Boolean);
-        segments.pop();
-        const newPath = '/' + segments.join('/');
-        confirmAndNavigate(newPath || '/');
     };
 
     const handleSignOut = async () => {
+        if (isSigningOut) return;
         if (hasUnsavedChanges) {
-            const confirmed = window.confirm("You have unsaved changes. Leave anyway?");
+            const confirmed = await showConfirmation({
+                title: "Unsaved Changes",
+                description: "You have unsaved changes. Are you sure you want to sign out?",
+                confirmText: "Sign Out",
+                confirmVariant: "destructive",
+            });
             if (!confirmed) return;
+        }
+        setIsSigningOut(true);
+        try {
+            await signOut();
             setHasUnsavedChanges(false);
+            router.push("/");
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsSigningOut(false);
         }
-
-        if (!isSigningOut) {
-            setIsSigningOut(true);
-            try {
-                router.push("/");
-                await doSignOut();
-            } catch (err) {
-                console.error(err);
-            } finally {
-                setIsSigningOut(false);
-            }
-        }
-    };
-
-    const handleScroll = () => {
-        setIsScrolled(window.scrollY > 20);
     };
 
     useEffect(() => {
+        const handleScroll = () => setIsScrolled(window.scrollY > 20);
         window.addEventListener("scroll", handleScroll);
-        return () => {
-            window.removeEventListener("scroll", handleScroll);
-        };
+        return () => window.removeEventListener("scroll", handleScroll);
     }, []);
+
+    const handleLinkClick = (e, path) => {
+        if (hasUnsavedChanges) {
+            e.preventDefault();
+            navigateWithConfirmation(path);
+        } else {
+            setMenuOpen(false);
+        }
+    };
 
     return (
         <>
@@ -78,7 +92,7 @@ export default function Navbar() {
                     transition-all duration-300 ease-in-out flex items-center justify-between
                 `}
             >
-                {/* LEFT SIDE */}
+                {/* LEFT SIDE (Original Styling) */}
                 <div className="flex items-center gap-3">
                     <button
                         onClick={handleBack}
@@ -86,66 +100,69 @@ export default function Navbar() {
                     >
                         ←
                     </button>
-
                     <div className="text-base md:text-lg font-bold text-gray-800">
                         <span className="text-blue-600">Repple</span>
                     </div>
                 </div>
 
-                {/* MIDDLE - Desktop Nav */}
+                {/* MIDDLE - Desktop Nav (Original Styling) */}
                 <nav className="hidden md:flex space-x-6 text-sm font-medium text-gray-700">
-                    <button onClick={() => confirmAndNavigate('/')} className="hover:text-blue-500 transition-colors cursor-pointer">Dashboard</button>
-                    <button onClick={() => confirmAndNavigate('/workouts')} className="hover:text-blue-500 transition-colors cursor-pointer">My Workouts</button>
-                    <button onClick={() => confirmAndNavigate('/history')} className="hover:text-blue-500 transition-colors cursor-pointer">History</button>
-                    <button onClick={() => confirmAndNavigate('/profile')} className="hover:text-blue-500 transition-colors cursor-pointer">Profile</button>
+                    <Link href="/dashboard" onClick={(e) => handleLinkClick(e, '/dashboard')} className="hover:text-blue-500 transition-colors cursor-pointer">Dashboard</Link>
+                    <Link href="/workouts" onClick={(e) => handleLinkClick(e, '/workouts')} className="hover:text-blue-500 transition-colors cursor-pointer">My Workouts</Link>
+                    <Link href="/history" onClick={(e) => handleLinkClick(e, '/history')} className="hover:text-blue-500 transition-colors cursor-pointer">History</Link>
+                    <Link href="/settings" onClick={(e) => handleLinkClick(e, '/settings')} className="hover:text-blue-500 transition-colors cursor-pointer">Profile</Link>
                 </nav>
 
-                {/* RIGHT SIDE */}
+                {/* RIGHT SIDE (Original Styling) */}
                 <div className="flex items-center space-x-3">
-                    {/* Desktop Auth Buttons */}
-                    <div className="hidden md:flex space-x-3">
-                        {!userLoggedIn || currentUser?.isAnonymous ? (
+                    <div className="hidden md:flex space-x-3 text-sm">
+                        {!userLoggedIn ? (
                             <>
-                                <button
-                                    onClick={() => confirmAndNavigate('/login')}
+                                <Link
+                                    href="/login"
+                                    onClick={(e) => handleLinkClick(e, '/login')}
                                     className="bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 
-                                    text-white font-bold px-5 rounded-full shadow-md transition cursor-pointer"
+                                             text-white font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer"
                                 >
                                     Login
-                                </button>
-                                <button
-                                    onClick={() => confirmAndNavigate('/register')}
+                                </Link>
+                                <Link
+                                    href="/register"
+                                    onClick={(e) => handleLinkClick(e, '/register')}
                                     className="bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 
-                                    text-white font-bold px-5 rounded-full shadow-md transition cursor-pointer"
+                                             text-white font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer"
                                 >
                                     Register
-                                </button>
+                                </Link>
                             </>
                         ) : (
                             <button
                                 onClick={handleSignOut}
-                                className="bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 
-                                text-white font-bold px-5 py-1 rounded-full shadow-md transition cursor-pointer"
+                                disabled={isSigningOut}
+                                className="bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 
+                                         text-white font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer disabled:opacity-50"
                             >
-                                Sign Out
+                                {isSigningOut ? "Signing out..." : "Sign Out"}
                             </button>
                         )}
                     </div>
 
-                    {/* Mobile Hamburger */}
+                    {/* Mobile Hamburger (Original Styling) */}
                     <button onClick={() => setMenuOpen(true)} className="md:hidden px-2 bg-white/70 rounded-full shadow">
                         ☰
                     </button>
                 </div>
             </header>
 
-            {/* Mobile Menu Modal */}
+            {/* Render the modals (they're invisible until called) */}
+            {ConfirmationModalComponent}
+
             {menuOpen && (
                 <MobileNavModal
                     onClose={() => setMenuOpen(false)}
                     userLoggedIn={userLoggedIn}
-                    currentUser={currentUser}
                     handleSignOut={handleSignOut}
+                    navigate={navigateWithConfirmation}
                 />
             )}
         </>

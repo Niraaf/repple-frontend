@@ -1,6 +1,10 @@
 import { useState, useMemo } from 'react';
 
-export const useExerciseFilter = (exerciseLibrary = []) => {
+/**
+ * A hook to manage filter state and return a memoized list of filtered exercises.
+ * @param {Array} exerciseLibrary - The full, unfiltered array of exercises.
+ */
+export const useFilteredExercises = (exerciseLibrary = []) => {
     const [searchQuery, setSearchQuery] = useState("");
     const [activeFilters, setActiveFilters] = useState({});
 
@@ -13,23 +17,22 @@ export const useExerciseFilter = (exerciseLibrary = []) => {
             return { ...prev, [categoryKey]: newSelection };
         });
     };
-    
-    // useMemo ensures this complex filtering logic only re-runs when needed.
+
     const filteredExercises = useMemo(() => {
+        // Return the full library if it's not ready yet
+        if (!exerciseLibrary || exerciseLibrary.length === 0) return [];
+
         return exerciseLibrary.filter(exercise => {
-            // 1. Filter by search query (name or description)
             const searchLower = searchQuery.toLowerCase();
             const searchMatch = searchQuery.length === 0 ||
                 exercise.name.toLowerCase().includes(searchLower) ||
                 exercise.description?.toLowerCase().includes(searchLower);
-            
+
             if (!searchMatch) return false;
 
-            // 2. Apply multi-select filters (AND between categories, OR within a category)
             return Object.entries(activeFilters).every(([categoryKey, selectedOptions]) => {
                 if (!selectedOptions || selectedOptions.length === 0) return true;
 
-                // The exercise must have at least ONE of the selected options for this category (OR logic)
                 return selectedOptions.some(optionName =>
                     exercise[categoryKey]?.some(tag => tag.name === optionName)
                 );

@@ -11,7 +11,6 @@ export default function ExerciseList({ exercises, onAddExercise, addedExerciseId
                     key={ex.id}
                     ex={ex}
                     onAdd={() => onAddExercise(ex)}
-                    isAdded={addedExerciseIds.includes(ex.id)}
                 />
             ))}
         </div>

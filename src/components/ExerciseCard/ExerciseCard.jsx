@@ -1,16 +1,18 @@
-// components/ExerciseCard/ExerciseCard.jsx
-
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 // A small sub-component for the Rep Target input
-const RepTargetInput = ({ value, onChange }) => {
-    const isRange = value?.includes('-');
-    const isAmrap = value === 'AMRAP';
-    const initialMode = isAmrap ? 'failure' : (isRange ? 'range' : 'single');
+const RepTargetInput = ({ value, isEditMode, onBlur, onChange }) => {
+    useEffect(() => {
+        const stringValue = String(value || '');
+        const isRange = stringValue.includes('-');
+        const isAmrap = stringValue === 'AMRAP';
+        const newMode = isAmrap ? 'failure' : (isRange ? 'range' : 'single');
+        setMode(newMode);
+    }, [value]);
 
-    const [mode, setMode] = useState(initialMode);
+    const [mode, setMode] = useState('single'); // Default to single
 
     const handleModeChange = (newMode) => {
         setMode(newMode);
@@ -19,11 +21,49 @@ const RepTargetInput = ({ value, onChange }) => {
         else if (newMode === 'range') onChange('8-12');
     };
 
-    const handleRangeChange = (part, val) => {
-        const parts = value.split('-');
-        if (part === 'min') onChange(`${val}-${parts[1] || val}`);
-        if (part === 'max') onChange(`${parts[0] || val}-${val}`);
+    const handleSingleRepChange = (val) => {
+        const sanitizedValue = val.toString().replace(/[^0-9]/g, '');
+        if (sanitizedValue === '') {
+            onChange(''); // Allow clearing the input
+        } else {
+            const numericValue = parseInt(sanitizedValue, 10);
+            onChange(String(Math.min(numericValue, 999))); // Clamp and ensure it's a string
+        }
     };
+
+    const handleRangeChange = (part, val) => {
+        // Sanitize and cap the input value
+        const sanitizedValue = val.toString().replace(/[^0-9]/g, '');
+        const numericValue = sanitizedValue === '' ? '' : Math.min(parseInt(sanitizedValue, 10), 999);
+
+        const parts = String(value).split('-');
+        if (part === 'min') {
+            onChange(`${numericValue}-${parts[1] || numericValue}`);
+        } else { // max
+            onChange(`${parts[0] || numericValue}-${numericValue}`);
+        }
+    };
+
+    const handleRangeBlur = () => {
+        let [min, max] = String(value).split('-').map(v => parseInt(v) || 1);
+
+        // Ensure min is at least 1
+        min = Math.min(Math.max(min, 1), 998);
+        // Ensure max is at least min + 1
+        max = Math.min(Math.max(max, min + 1), 999);
+
+        onChange(`${min}-${max}`);
+    };
+
+    if (!isEditMode) {
+        const displayValue = value === 'AMRAP' ? 'AMRAP' : `${value} Reps`;
+        return (
+            <div className="flex justify-between items-center h-[30px]">
+                <span className="text-gray-500">Rep Target</span>
+                <span className="font-semibold text-gray-700">{displayValue}</span>
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-col gap-2 justify-between">
@@ -36,15 +76,20 @@ const RepTargetInput = ({ value, onChange }) => {
                 </div>
             </div>
             {mode === 'single' && (
-                <div className="flex items-center justify-center">
-                    <input type="text" inputMode="numeric" value={value} onChange={(e) => onChange(e.target.value)} className="remove-arrows w-16 text-center py-1 border border-gray-200 rounded-md bg-white" />
-                </div>
+                <input
+                    type="text"
+                    inputMode="numeric"
+                    value={value}
+                    onBlur={onBlur}
+                    onChange={(e) => handleSingleRepChange(e.target.value)}
+                    className="remove-arrows w-full text-center py-1 border border-gray-200 rounded-md bg-white"
+                />
             )}
             {mode === 'range' && (
-                <div className="flex gap-2 items-center justify-center">
-                    <input type="text" inputMode="numeric" value={value.split('-')[0] || ''} onChange={(e) => handleRangeChange('min', e.target.value)} className="remove-arrows w-16 text-center py-1 border border-gray-200 rounded-md bg-white" />
+                <div className="flex gap-2 items-center justify-end">
+                    <input type="text" inputMode="numeric" value={String(value).split('-')[0] || ''} onBlur={handleRangeBlur} onChange={(e) => handleRangeChange('min', e.target.value)} className="remove-arrows w-14 text-center py-1 border border-gray-200 rounded-md bg-white" />
                     <span>-</span>
-                    <input type="text" inputMode="numeric" value={value.split('-')[1] || ''} onChange={(e) => handleRangeChange('max', e.target.value)} className="remove-arrows w-16 text-center py-1 border border-gray-200 rounded-md bg-white" />
+                    <input type="text" inputMode="numeric" value={String(value).split('-')[1] || ''} onBlur={handleRangeBlur} onChange={(e) => handleRangeChange('max', e.target.value)} className="remove-arrows w-14 text-center py-1 border border-gray-200 rounded-md bg-white" />
                 </div>
             )}
         </div>
@@ -52,42 +97,49 @@ const RepTargetInput = ({ value, onChange }) => {
 };
 
 
-export default function ExerciseCard({ id, step, index, onChange, onDelete }) {
+export default function ExerciseCard({ id, step, index, isEditMode, onBlur, onChange, onDelete }) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
 
     const style = {
         transform: CSS.Transform.toString(transform),
-        transition: CSS.Translate.toString(transform),
+        transition,
         boxShadow: isDragging ? "0 4px 15px rgba(0,0,0,0.2)" : "0 1px 3px rgba(0,0,0,0.1)",
         zIndex: isDragging ? 45 : "auto",
         backgroundColor: isDragging ? "rgba(255, 255, 255, 0.7)" : ""
     };
 
     const exerciseDetails = step.exercise || {};
-    const mechanics = exerciseDetails.mechanics;
+    const mechanics = exerciseDetails.mechanics || [];
 
     const renderInputs = () => {
-        const isTimed = mechanics.some(m => m.name.toLowerCase().includes('isometric') || m.name.toLowerCase().includes('stretching'));
+        const isTimed = mechanics.some(m => m && m.name && (m.name.toLowerCase().includes('isometric') || m.name.toLowerCase().includes('stretching')));
+        const inputBaseClasses = "remove-arrows w-16 text-center py-1 border border-gray-200 rounded-md bg-white read-only:bg-transparent read-only:border-transparent read-only:ring-0 read-only:font-semibold read-only:text-gray-700";
+
         return (
             <div className="flex flex-col gap-1 text-[11px]">
                 <div className="flex justify-between items-center">
                     <span className="text-gray-500">Sets</span>
-                    <input type="text" inputMode="numeric" value={step.target_sets || ''} onChange={(e) => onChange('target_sets', e.target.value)} className="remove-arrows w-16 text-center py-1 border border-gray-200 rounded-md bg-white" />
+                    <input type="text" inputMode="numeric" value={step.target_sets || ''} readOnly={!isEditMode} onBlur={() => onBlur('target_sets')} onChange={(e) => onChange('target_sets', e.target.value)} className={inputBaseClasses} />
                 </div>
 
                 {isTimed ? (
                     <div className="flex justify-between items-center">
                         <span className="text-gray-500">Hold (sec)</span>
-                        <input type="text" inputMode="numeric" value={step.target_duration_seconds || ''} onChange={(e) => onChange('target_duration_seconds', e.target.value)} className="remove-arrows w-16 text-center py-1 border border-gray-200 rounded-md bg-white" />
+                        <input type="text" inputMode="numeric" value={step.target_duration_seconds || ''} readOnly={!isEditMode} onBlur={() => onBlur('target_duration_seconds')} onChange={(e) => onChange('target_duration_seconds', e.target.value)} className={inputBaseClasses} />
                     </div>
                 ) : (
-                    <RepTargetInput value={step.target_reps || ''} onChange={(newValue) => onChange('target_reps', newValue)} />
+                    <RepTargetInput
+                        value={step.target_reps || ''}
+                        isEditMode={isEditMode}
+                        onBlur={() => onBlur('target_reps')}
+                        onChange={(newValue) => onChange('target_reps', newValue)}
+                    />
                 )}
 
-                {!mechanics.some(m => m.name.toLowerCase().includes('stretching')) && (
+                {!mechanics.some(m => m && m.name && m.name.toLowerCase().includes('stretching')) && (
                     <div className="flex justify-between items-center">
                         <span className="text-gray-500">Rest (sec)</span>
-                        <input type="text" inputMode="numeric" value={step.target_intra_set_rest_seconds || ''} onChange={(e) => onChange('target_intra_set_rest_seconds', e.target.value)} className="remove-arrows w-16 text-center py-1 border border-gray-200 rounded-md bg-white" />
+                        <input type="text" inputMode="numeric" value={step.target_intra_set_rest_seconds || ''} readOnly={!isEditMode} onBlur={() => onBlur('target_intra_set_rest_seconds')} onChange={(e) => onChange('target_intra_set_rest_seconds', e.target.value)} className={inputBaseClasses} />
                     </div>
                 )}
             </div>
@@ -97,10 +149,10 @@ export default function ExerciseCard({ id, step, index, onChange, onDelete }) {
     return (
         <div ref={setNodeRef} style={style} className="w-75 h-60 rounded-xl p-3 flex flex-col bg-white/30 backdrop-blur-md relative border-4 border-b-0 border-white/30">
             {/* Draggable Handle and Header */}
-            <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
+            <div {...attributes} {...(isEditMode ? listeners : {})} className={`${isEditMode ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}`}>
                 <div className="flex justify-between items-start mb-1">
                     <h3 className="font-semibold text-sm text-gray-800 leading-snug">⚔️ {exerciseDetails.name}</h3>
-                    <button onClick={onDelete} className="text-gray-400 hover:text-red-500 ...">✕</button>
+                    {isEditMode && <button onClick={onDelete} className="absolute top-2 right-2 text-gray-300 hover:text-red-400 transition text-sm cursor-pointer w-6 h-6">✕</button>}
                 </div>
             </div>
 

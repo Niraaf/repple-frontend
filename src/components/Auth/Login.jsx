@@ -8,71 +8,59 @@ import { useRouter } from "next/navigation";
 
 const Login = () => {
     const router = useRouter();
-    const { currentUser, userLoggedIn, signInMutex } = useAuth();
+    const { userLoggedIn, userLoading, setMergingFlag } = useAuth();
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [isSigningIn, setIsSigningIn] = useState(false);
     const [error, setError] = useState(null);
-    const [shouldRedirect, setShouldRedirect] = useState(false);
+
+    // This effect handles redirecting users who are already logged in.
+    useEffect(() => {
+        // Only check for redirects once the initial auth state is resolved.
+        if (!userLoading && userLoggedIn) {
+            router.push("/dashboard");
+        }
+    }, [userLoggedIn, userLoading, router]);
 
     const onSubmit = async (e) => {
         e.preventDefault();
-        if (!isSigningIn) {
-            setError(null);
-            setIsSigningIn(true);
+        if (isSigningIn) return;
 
-            try {
-                signInMutex.current = true;
-                await doSignInWithEmailAndPassword(email, password);
-                router.push("/");
-            } catch (err) {
-                setError(err.message);
-            } finally {
-                setIsSigningIn(false);
-                signInMutex.current = false;
-            }
+        setError(null);
+        setIsSigningIn(true);
+        try {
+            await doSignInWithEmailAndPassword(email, password);
+            // On success, the AuthProvider's listener will update the state
+            // and the useEffect above will handle the redirect.
+        } catch (err) {
+            setError(err.message);
+            setIsSigningIn(false); // Only reset loading state on error
         }
     };
 
     const onGoogleAuthClick = async (e) => {
         e.preventDefault();
-        if (!isSigningIn) {
-            setError(null);
-            setIsSigningIn(true);
+        if (isSigningIn) return;
 
-            try {
-                signInMutex.current = true;
-                await handleGoogleAuth();
-                router.push("/");
-            } catch (err) {
-                setError(err.message);
-            } finally {
-                setIsSigningIn(false);
-                signInMutex.current = false;
-            }
+        setError(null);
+        setIsSigningIn(true);
+        setMergingFlag(true); // Signal to AuthProvider that a merge might happen
+        try {
+            await handleGoogleAuth();
+        } catch (err) {
+            setError(err.message);
+            setIsSigningIn(false);
+        } finally {
+            setMergingFlag(false); // Always reset the flag
         }
     };
 
-    useEffect(() => {
-        if (currentUser && !currentUser.isAnonymous && userLoggedIn) {
-            setShouldRedirect(true);
-            const timer = setTimeout(() => {
-                router.push("/");
-            }, 1500);
-            return () => clearTimeout(timer);
-        }
-    }, [currentUser, userLoggedIn]);
-
-    if (shouldRedirect) {
+    // Show a unified loading/redirecting state
+    if (userLoading || userLoggedIn) {
         return (
             <div className="flex justify-center items-center min-h-screen">
-                <div className="flex flex-col items-center justify-center p-10 rounded-lg shadow-lg w-full max-w-md bg-white/50 border-4 border-b-0 border-white/40">
-                    <h1 className="w-full h-full text-3xl font-semibold text-center text-gray-700 mb-4">
-                        Already logged in.
-                    </h1>
-                    <p className="text-gray-500 font-bold text-lg animate-pulse">Redirecting...</p>
-                </div>
+                <p className="text-gray-500 font-bold text-lg animate-pulse">Loading...</p>
             </div>
         );
     }
@@ -119,7 +107,7 @@ const Login = () => {
                     disabled={isSigningIn}
                     className="w-full py-2 mt-4 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:bg-gray-300 text-sm md:text-base"
                 >
-                    {isSigningIn ? "Signing In with Google..." : "Sign In with Google"}
+                    Sign In with Google
                 </button>
 
                 <div className="mt-4 text-center text-xs md:text-base text-gray-600">

@@ -1,4 +1,15 @@
-const ExerciseListItem = ({ ex, onAdd, isAdded }) => {
+import React, { useState } from 'react';
+
+const ExerciseListItem = ({ ex, onAdd }) => {
+    const [isClicked, setIsClicked] = useState(false);
+
+    const handleAddClick = () => {
+        onAdd(ex);
+        setIsClicked(true);
+        setTimeout(() => {
+            setIsClicked(false);
+        }, 500);
+    };
     return (
         <div className="flex items-center justify-between p-4 bg-white/50 hover:bg-white/70 border-4 border-b-0 border-white/30 rounded-xl hover:shadow-sm transition">
 
@@ -34,20 +45,20 @@ const ExerciseListItem = ({ ex, onAdd, isAdded }) => {
                 </div>
             </div>
 
-            {/* Action Button Section (Identical to your original) */}
-            {isAdded ? (
-                <div className="flex items-center justify-center w-8 h-8 bg-green-200 text-green-700 rounded-full text-sm cursor-default shrink-0">
-                    ✓
-                </div>
-            ) : (
-                <button
-                    onClick={onAdd}
-                    className="flex items-center justify-center w-8 h-8 bg-purple-500 hover:bg-purple-600 text-white rounded-full text-lg transition shrink-0 cursor-pointer"
-                    aria-label="Add Exercise"
-                >
-                    +
-                </button>
-            )}
+            {/* Action Button Section */}
+            <button
+                onClick={handleAddClick}
+                disabled={isClicked}
+                className={`flex items-center justify-center w-8 h-8 text-white rounded-full text-xl transition-all duration-200 ease-in-out shrink-0
+                    ${isClicked
+                        ? 'bg-green-500 scale-110 rotate-[360deg]' // The "success" style
+                        : 'bg-purple-500 hover:bg-purple-600 cursor-pointer'      // The normal style
+                    }
+                `}
+                aria-label="Add Exercise"
+            >
+                {isClicked ? '✓' : '+'}
+            </button>
         </div>
     );
 };
