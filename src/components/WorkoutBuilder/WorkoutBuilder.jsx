@@ -78,8 +78,7 @@ export default function WorkoutBuilder({ workoutId }) {
   // Data Fetching & Mutations from our new consolidated hook
   const { data: existingWorkout, isLoading, isError, error } = useWorkoutDetails(
     workoutId,
-    userProfile?.firebase_uid,
-    { enabled: router.isReady && workoutId !== 'new' }
+    userProfile?.firebase_uid
   );
   const { mutateAsync: createWorkout, isPending: isCreating } = useCreateWorkout();
   const { mutateAsync: updateWorkout, isPending: isUpdating } = useUpdateWorkout();
@@ -390,7 +389,7 @@ export default function WorkoutBuilder({ workoutId }) {
     }
   };
 
-  if (isLoading || !existingWorkout || !userProfile) {
+  if (isLoading || !userProfile) {
     return <div className="flex justify-center items-center h-screen">Loading workout...</div>;
   }
 

@@ -82,7 +82,6 @@ export default function WorkoutList() {
                 + Create New Workout
             </button>
 
-            {/* Render the alert modal component (it's invisible until called) */}
             { AlertModalComponent }
         </div>
     );

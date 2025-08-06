@@ -101,7 +101,7 @@ export const useWorkoutDetails = (workoutId, firebaseUid, options = {}) => {
     return useQuery({
         queryKey: workoutsKeys.detail(workoutId),
         queryFn: () => getWorkoutById(workoutId, firebaseUid),
-        enabled: workoutId !== "new" && !!firebaseUid && (options.enabled ?? true),
+        enabled: workoutId !== "new" && !!firebaseUid,
         refetchOnWindowFocus: false,
         retry: (failureCount, error) => {
             if (error.status >= 400 && error.status < 500) return false;
