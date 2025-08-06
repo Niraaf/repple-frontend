@@ -28,7 +28,7 @@ export default function SetCompletionScreen({ step, nextStep, currentSetNumber, 
 
     const inputClasses = "w-24 text-center text-lg font-semibold py-2 border border-gray-200 rounded-lg bg-white/80 focus:ring-2 focus:ring-purple-400 focus:outline-none transition";
     const labelClasses = "text-md font-medium text-gray-700";
-    const buttonText = `Log Set & Start ${showNextUpForStretch ? 'Next Set' : 'Rest'}`;
+    const buttonText = `Log Set & ${isLastSet && !nextStep ? 'Finish Workout' : showNextUpForStretch ? 'Start Next Set' : 'Start Rest'}`;
 
     return (
         <div className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm flex justify-center items-center p-4">

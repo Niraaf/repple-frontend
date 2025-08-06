@@ -1,4 +1,4 @@
-import ExerciseListItem from '../ExerciseListItem/ExerciseListItem';
+import ExerciseListItem from './ExerciseListItem';
 
 export default function ExerciseList({ exercises, onAddExercise, addedExerciseIds }) {
     if (exercises.length === 0) {

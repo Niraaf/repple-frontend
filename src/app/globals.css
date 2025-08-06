@@ -109,84 +109,79 @@
 }
 
 
-/* Default Gradient Layer */
+/* =================================================================
+   🎨 BLOB THEME DEFINITIONS
+   ================================================================= */
+
+/* --- Base Layer Styles --- */
+.bg-gradient-default,
+.bg-gradient-ready,
+.bg-gradient-active_set,
+.bg-gradient-resting,
+.bg-gradient-logging,
+.bg-gradient-finished {
+    transition: opacity 0.7s ease-in-out;
+}
+
+/* The default gradient starts VISIBLE */
 .bg-gradient-default {
     background-image: linear-gradient(to top right, #fecaca, #bbf7d0);
-    /* red-green */
-    opacity: 1;
-    transition: opacity 0.7s ease;
-}
-
-body.repple-rest .bg-gradient-default,
-body.repple-exercise .bg-gradient-default {
-    opacity: 0;
-}
-
-.bg-gradient-rest {
-    background-image: linear-gradient(to top right, #bbf7d0, #bfdbfe);
-    /* blue-green */
-    opacity: 0;
-    transition: opacity 0.7s ease;
-}
-
-body.repple-rest .bg-gradient-rest {
     opacity: 1;
 }
 
-.bg-gradient-exercise {
-    background-image: linear-gradient(to top right, #ddd6fe, #fde68a);
-    /* violet-yellow */
+/* All other theme gradients start HIDDEN */
+.bg-gradient-ready     { opacity: 0; background-image: linear-gradient(to top right, #e0f2fe, #dbeafe); }
+.bg-gradient-active_set { opacity: 0; background-image: linear-gradient(to top right, #ddd6fe, #fde68a); }
+.bg-gradient-resting    { opacity: 0; background-image: linear-gradient(to top right, #bbf7d0, #bfdbfe); }
+.bg-gradient-logging    { opacity: 0; background-image: linear-gradient(to top right, #fed7aa, #fca5a5); }
+.bg-gradient-finished   { opacity: 0; background-image: linear-gradient(to top right, #fde047, #6ee7b7); }
+
+
+/* --- Visibility Logic --- */
+
+/* This rule HIDES the default gradient when ANY other theme is active. */
+body.repple-ready .bg-gradient-default,
+body.repple-active_set .bg-gradient-default,
+body.repple-resting .bg-gradient-default,
+body.repple-logging .bg-gradient-default,
+body.repple-finished .bg-gradient-default {
     opacity: 0;
-    transition: opacity 0.7s ease;
 }
 
-body.repple-exercise .bg-gradient-exercise {
-    opacity: 1;
-}
+/* This set of rules SHOWS the active theme's gradient. */
+body.repple-ready .bg-gradient-ready { opacity: 1; }
+body.repple-active_set .bg-gradient-active_set { opacity: 1; }
+body.repple-resting .bg-gradient-resting { opacity: 1; }
+body.repple-logging .bg-gradient-logging { opacity: 1; }
+body.repple-finished .bg-gradient-finished { opacity: 1; }
 
 
-/* === 🫧 INDIVIDUAL BLOBS === */
-body.repple-default .bg-blob-1 {
-    background-color: #d8b4fe;
-    /* purple-300 */
-}
+/* --- Blob Color Rules (Grouped by Theme) --- */
 
-body.repple-default .bg-blob-2 {
-    background-color: #bae6fd;
-    /* blue-200 */
-}
+/* Default & Ready Themes */
+body.repple-default .bg-blob-1,
+body.repple-ready .bg-blob-1 { background-color: #d8b4fe; }
+body.repple-default .bg-blob-2,
+body.repple-ready .bg-blob-2 { background-color: #bae6fd; }
+body.repple-default .bg-blob-3,
+body.repple-ready .bg-blob-3 { background-color: #fbcfe8; }
 
-body.repple-default .bg-blob-3 {
-    background-color: #fbcfe8;
-    /* pink-300 */
-}
+/* Active Set Theme */
+body.repple-active_set .bg-blob-1 { background-color: #c084fc; }
+body.repple-active_set .bg-blob-2 { background-color: #fde68a; }
+body.repple-active_set .bg-blob-3 { background-color: #facc15; }
 
-body.repple-exercise .bg-blob-1 {
-    background-color: #c084fc;
-    /* violet-400 */
-}
+/* Resting Theme */
+body.repple-resting .bg-blob-1 { background-color: #93c5fd; }
+body.repple-resting .bg-blob-2 { background-color: #a7f3d0; }
+body.repple-resting .bg-blob-3 { background-color: #bfdbfe; }
 
-body.repple-exercise .bg-blob-2 {
-    background-color: #fde68a;
-    /* yellow-300 */
-}
+/* Logging Theme */
+body.repple-logging .bg-blob-1 { background-color: #fb923c; }
+body.repple-logging .bg-blob-2 { background-color: #f87171; }
+body.repple-logging .bg-blob-3 { background-color: #fdba74; }
 
-body.repple-exercise .bg-blob-3 {
-    background-color: #facc15;
-    /* yellow-400 */
-}
-
-body.repple-rest .bg-blob-1 {
-    background-color: #93c5fd;
-    /* blue-300 */
-}
-
-body.repple-rest .bg-blob-2 {
-    background-color: #a7f3d0;
-    /* green-200 */
-}
-
-body.repple-rest .bg-blob-3 {
-    background-color: #bfdbfe;
-    /* blue-100 */
-}
+/* Finished Theme */
+body.repple-finished .bg-blob-1 { background-color: #facc15; }
+body.repple-finished .bg-blob-2 { background-color: #34d399; }
+body.repple-finished .bg-blob-3 { background-color: #a7f3d0; }

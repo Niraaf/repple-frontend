@@ -1,17 +1,32 @@
+'use client';
+
 import { useEffect } from "react";
-import { usePathname } from "next/navigation";
 
-export function useBlobTheme(theme) { // "default" | "exercise" | "rest"
-    const pathname = usePathname();
-
+/**
+ * A custom hook to dynamically change the body's theme class based on the player state.
+ * @param {string} playerState - The current state of the workout player 
+ * (e.g., 'ready', 'active_set', 'resting', 'logging', 'finished').
+ */
+export function useBlobTheme(playerState) {
     useEffect(() => {
-        if (typeof window === "undefined") return;
+        const themes = [
+            'repple-default',
+            'repple-ready',
+            'repple-active_set',
+            'repple-resting',
+            'repple-logging',
+            'repple-finished'
+        ];
 
-        // force default theme if not on trainer/workout routes
+        const classToApply = `repple-${playerState}`;
+        const finalThemeClass = themes.includes(classToApply) ? classToApply : 'repple-default';
 
-        const appliedTheme = theme;
+        document.body.classList.remove(...themes);
+        document.body.classList.add(finalThemeClass);
 
-        document.body.classList.remove("repple-default", "repple-exercise", "repple-rest");
-        document.body.classList.add(`repple-${appliedTheme}`);
-    }, [theme, pathname]);
+        return () => {
+            document.body.classList.remove(finalThemeClass);
+            document.body.classList.add('repple-default');
+        };
+    }, [playerState]);
 }

@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/authContext";
 import { usePathname, useRouter } from 'next/navigation';
 import { useUnsavedChanges } from "@/contexts/unsavedChangesContext";
 import { useConfirmationModal } from "@/hooks/useConfirmationModal";
-import MobileNavModal from "../MobileNavModal/MobileNavModal";
+import MobileNavModal from "./MobileNavModal";
 
 export default function Navbar() {
     const { userLoggedIn, signOut } = useAuth();

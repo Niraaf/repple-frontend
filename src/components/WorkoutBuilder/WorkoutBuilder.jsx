@@ -10,8 +10,8 @@ import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 import Link from "next/link";
 
 // Components
-import ExerciseCard from "../ExerciseCard/ExerciseCard"; // Assumes this is updated for the new data structure
-import RestBlock from "../RestBlock/RestBlock";       // Assumes this is updated for the new data structure
+import ExerciseCard from "./ExerciseCard";
+import RestBlock from "./RestBlock";
 import ExerciseModal from "../ExerciseModal/ExerciseModal";
 
 // Hooks & Context
@@ -150,6 +150,7 @@ export default function WorkoutBuilder({ workoutId }) {
       });
     }
   };
+  
   const cleanAndMergeSteps = (steps) => {
     let wasChanged = false;
     if (steps.length < 2) {
@@ -389,7 +390,7 @@ export default function WorkoutBuilder({ workoutId }) {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || !existingWorkout || !userProfile) {
     return <div className="flex justify-center items-center h-screen">Loading workout...</div>;
   }
 
@@ -493,18 +494,18 @@ export default function WorkoutBuilder({ workoutId }) {
                   </button>
                 )}
               </div>
-            ) : (
-              <div className="flex gap-4">
-                <button
-                  className="bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 
+            ) : (isOwner
+              ? (
+                <div className="flex gap-4">
+                  <button
+                    className="bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 
                             font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer"
-                  onClick={handleStartWorkout}
-                  disabled={isStarting || !userProfile}
-                >
-                  ▶️ Start
-                </button>
+                    onClick={handleStartWorkout}
+                    disabled={isStarting || !userProfile}
+                  >
+                    ▶️ Start
+                  </button>
 
-                {isOwner && (
                   <button
                     onClick={() => {
                       if (isOwner) {
@@ -515,8 +516,18 @@ export default function WorkoutBuilder({ workoutId }) {
                   >
                     ✏️ Edit
                   </button>
-                )}
-              </div>
+                </div>
+              )
+              : (
+                <div className="flex gap-4">
+                  <button
+                    onClick={() => alert("Copies workout to non-owner user profile (TO IMPLEMENT)")}
+                    className="bg-white/30 hover:bg-white/50 font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer"
+                  >
+                    Copy Workout to Profile
+                  </button>
+                </div>
+              )
             )}
           </div>
 
