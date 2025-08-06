@@ -3,10 +3,12 @@
 import { useUserWorkouts } from "@/hooks/useWorkouts";
 import WorkoutCard from "../WorkoutCard/WorkoutCard";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/authContext";
 
 export default function WorkoutList() {
     const router = useRouter();
-    const { data: workouts, isLoading, isError } = useUserWorkouts();
+    const { userProfile } = useAuth();
+    const { data: workouts, isLoading, isError } = useUserWorkouts(userProfile?.firebase_uid);
 
     const handleCreate = () => {
         router.push('/workouts/new');

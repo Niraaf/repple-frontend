@@ -1,11 +1,11 @@
-import WorkoutTimer from "@/components/WorkoutTimer/WorkoutTimer"
+import LiveSessionPlayer from "@/components/LiveSessionPlayer/LiveSessionPlayer"
 
 export default async function PlayWorkout({ params }) {
-    const { id } = await params;
+    const { sessionId } = await params;
 
     return (
         <div>
-            <WorkoutTimer workoutId={id} />
+            <LiveSessionPlayer sessionId={sessionId} />
         </div>
     )
 }

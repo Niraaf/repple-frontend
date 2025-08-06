@@ -16,6 +16,7 @@ import ExerciseModal from "../ExerciseModal/ExerciseModal";
 
 // Hooks & Context
 import { useWorkoutDetails, useCreateWorkout, useUpdateWorkout, useDeleteWorkout } from "@/hooks/useWorkouts";
+import { useCreateSession } from "@/hooks/useSession";
 import { useUnsavedChanges } from "@/contexts/unsavedChangesContext";
 import { useUnsavedChangesWarning } from "@/hooks/useUnsavedChangesWarning";
 import { useConfirmationModal } from "@/hooks/useConfirmationModal";
@@ -75,12 +76,15 @@ export default function WorkoutBuilder({ workoutId }) {
   useUnsavedChangesWarning();
 
   // Data Fetching & Mutations from our new consolidated hook
-  const { data: existingWorkout, isLoading, isError, error } = useWorkoutDetails(workoutId, {
-    enabled: router.isReady && !isNewWorkout,
-  });
+  const { data: existingWorkout, isLoading, isError, error } = useWorkoutDetails(
+    workoutId,
+    userProfile?.firebase_uid,
+    { enabled: router.isReady && workoutId !== 'new' }
+  );
   const { mutateAsync: createWorkout, isPending: isCreating } = useCreateWorkout();
   const { mutateAsync: updateWorkout, isPending: isUpdating } = useUpdateWorkout();
   const { mutate: deleteWorkout, isPending: isDeleting } = useDeleteWorkout();
+  const { mutateAsync: createSession, isPending: isStarting } = useCreateSession();
   const isSaving = isCreating || isUpdating;
 
   const isOwner = useMemo(() => {
@@ -128,6 +132,24 @@ export default function WorkoutBuilder({ workoutId }) {
     useSensor(MouseSensor, { activationConstraint: { distance: 5 } })
   );
 
+  const handleStartWorkout = async () => {
+    if (isStarting || !userProfile) return;
+
+    try {
+      const newSession = await createSession({
+        workoutId: workoutId,
+        firebaseUid: userProfile.firebase_uid
+      });
+      router.push(`/session/${newSession.id}`);
+
+    } catch (error) {
+      console.error("Failed to start session:", error);
+      showAlert({
+        title: "Error",
+        message: "Could not start the workout session. Please try again."
+      });
+    }
+  };
   const cleanAndMergeSteps = (steps) => {
     let wasChanged = false;
     if (steps.length < 2) {
@@ -284,7 +306,7 @@ export default function WorkoutBuilder({ workoutId }) {
     try {
       let savedWorkout;
       if (isNewWorkout) {
-        const promise = createWorkout({ workoutData });
+        const promise = createWorkout({ workoutData, firebaseUid: userProfile?.firebase_uid });
 
         toast.promise(promise, {
           loading: 'Saving new workout...',
@@ -296,7 +318,7 @@ export default function WorkoutBuilder({ workoutId }) {
         setHasUnsavedChanges(false);
         router.push(`/workouts/${savedWorkout.id}`);
       } else {
-        const promise = updateWorkout({ workoutId, workoutData });
+        const promise = updateWorkout({ workoutId, workoutData, firebaseUid: userProfile?.firebase_uid });
 
         toast.promise(promise, {
           loading: 'Updating workout...',
@@ -344,7 +366,7 @@ export default function WorkoutBuilder({ workoutId }) {
 
     try {
       // 3. Await the actual delete mutation promise.
-      await deleteWorkout({ workoutId });
+      await deleteWorkout({ workoutId, firebaseUid: userProfile?.firebase_uid });
 
       // 4. If the promise succeeds, update the toast to a "success" message.
       //    We pass the original toastId to update it in place.
@@ -473,7 +495,12 @@ export default function WorkoutBuilder({ workoutId }) {
               </div>
             ) : (
               <div className="flex gap-4">
-                <button className="bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer">
+                <button
+                  className="bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 
+                            font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer"
+                  onClick={handleStartWorkout}
+                  disabled={isStarting || !userProfile}
+                >
                   ▶️ Start
                 </button>
 

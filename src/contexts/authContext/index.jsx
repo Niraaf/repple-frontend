@@ -33,7 +33,7 @@ export function AuthProvider({ children }) {
                 if (error) throw error;
                 setUserProfile(profile);
             } catch (error) {
-                console.error("Error syncing user profile:", error);
+                console.error("Error syncing user profile:", error.message);
                 setUserProfile(null);
             }
         };

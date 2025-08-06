@@ -78,33 +78,35 @@ const deleteWorkout = async ({ workoutId, firebaseUid }) => {
 // =================================================================
 //  3. Custom React Query Hooks (UPDATED)
 // =================================================================
-
 /**
- * Hook to fetch a list of the current user's workouts.
+ * Hook to fetch a list of workouts for a specific user.
+ * @param {string} firebaseUid - The Firebase UID of the user.
  */
-export const useUserWorkouts = () => {
-    const { currentUser } = useAuth();
+export const useUserWorkouts = (firebaseUid) => {
     return useQuery({
-        // The query key is now user-specific, so if the user changes, the data will be refetched.
-        queryKey: workoutsKeys.list(currentUser?.uid),
-        // Pass the UID to the fetch function.
-        queryFn: () => getWorkouts(currentUser.uid),
-        // Only run the query if a user is logged in.
-        enabled: !!currentUser,
+        queryKey: workoutsKeys.list(firebaseUid),
+        queryFn: () => getWorkouts(firebaseUid),
+        // The query will only run if a firebaseUid is provided.
+        enabled: !!firebaseUid,
     });
 };
 
 /**
  * Hook to fetch the details of a single workout by its ID.
+ * @param {string} workoutId - The UUID of the workout.
+ * @param {string} firebaseUid - The Firebase UID of the current user.
+ * @param {object} options - Optional React Query options.
  */
-export const useWorkoutDetails = (workoutId, options = {}) => {
-    const { currentUser } = useAuth();
+export const useWorkoutDetails = (workoutId, firebaseUid, options = {}) => {
     return useQuery({
         queryKey: workoutsKeys.detail(workoutId),
-        queryFn: () => getWorkoutById(workoutId, currentUser?.uid),
-        // The enabled check now also respects options passed from the component (like router.isReady)
-        enabled: workoutId !== "new" && !!currentUser && (options.enabled ?? true),
+        queryFn: () => getWorkoutById(workoutId, firebaseUid),
+        enabled: workoutId !== "new" && !!firebaseUid && (options.enabled ?? true),
         refetchOnWindowFocus: false,
+        retry: (failureCount, error) => {
+            if (error.status >= 400 && error.status < 500) return false;
+            return failureCount < 2;
+        },
         ...options
     });
 };
@@ -114,13 +116,8 @@ export const useWorkoutDetails = (workoutId, options = {}) => {
  */
 export const useCreateWorkout = () => {
     const queryClient = useQueryClient();
-    const { currentUser } = useAuth();
-
     return useMutation({
-        mutationFn: (workoutData) => {
-            if (!currentUser) throw new Error("User not authenticated.");
-            return createWorkout({ workoutData, firebaseUid: currentUser.uid });
-        },
+        mutationFn: createWorkout, // Expects { workoutData, firebaseUid }
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: workoutsKeys.lists() });
         },
@@ -132,13 +129,8 @@ export const useCreateWorkout = () => {
  */
 export const useUpdateWorkout = () => {
     const queryClient = useQueryClient();
-    const { currentUser } = useAuth();
-
     return useMutation({
-        mutationFn: ({ workoutId, workoutData }) => {
-            if (!currentUser) throw new Error("User not authenticated.");
-            return updateWorkout({ workoutId, workoutData, firebaseUid: currentUser.uid });
-        },
+        mutationFn: updateWorkout, // Expects { workoutId, workoutData, firebaseUid }
         onSuccess: (data, variables) => {
             const { workoutId } = variables;
             queryClient.invalidateQueries({ queryKey: workoutsKeys.lists() });
@@ -152,14 +144,10 @@ export const useUpdateWorkout = () => {
  */
 export const useDeleteWorkout = () => {
     const queryClient = useQueryClient();
-    const { currentUser } = useAuth();
-
     return useMutation({
-        mutationFn: (workoutId) => {
-            if (!currentUser) throw new Error("User not authenticated.");
-            return deleteWorkout({ workoutId, firebaseUid: currentUser.uid });
-        },
-        onSuccess: (data, workoutId) => {
+        mutationFn: deleteWorkout, // Expects { workoutId, firebaseUid }
+        onSuccess: (data, variables) => {
+            const { workoutId } = variables;
             queryClient.invalidateQueries({ queryKey: workoutsKeys.lists() });
             queryClient.removeQueries({ queryKey: workoutsKeys.detail(workoutId) });
         },
