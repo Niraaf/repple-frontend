@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/supabase/supabase';
+import { createSupabaseBrowserClient } from '@/supabase/supabaseClient';
+
+const supabase = createSupabaseBrowserClient();
 
 /**
  * API Route to fetch all available filter options for the exercise library.

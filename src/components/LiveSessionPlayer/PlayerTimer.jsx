@@ -1,4 +1,3 @@
-// src/components/LiveSessionPlayer/PlayerTimer.jsx
 'use client';
 
 export default function PlayerTimer({ seconds, isResting }) {

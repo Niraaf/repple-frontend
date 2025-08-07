@@ -1,19 +1,22 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/authContext';
+import { createSupabaseBrowserClient } from '@/supabase/supabaseClient';
+
+const supabase = createSupabaseBrowserClient();
 
 /**
  * API service function to fetch exercises.
- * It intelligently includes the user's ID in the request if they are logged in.
+ * It now securely sends the user's ID Token in the Authorization header.
  */
-const fetchExercises = async (currentUser) => {
-    let url = '/api/exercises';
+const fetchExercises = async () => {
+    const headers = { 'Content-Type': 'application/json' };
+    const { data: { session } } = await supabase.auth.getSession();
 
-    // If a user is logged in, add their UID as a query parameter
-    if (currentUser) {
-        url += `?firebaseUid=${currentUser.uid}`;
+    if (session) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
     }
 
-    const res = await fetch(url);
+    const res = await fetch('/api/exercises', { headers });
     if (!res.ok) {
         throw new Error('Failed to fetch exercises');
     }
@@ -22,16 +25,17 @@ const fetchExercises = async (currentUser) => {
 
 /**
  * Custom hook to fetch the exercise library.
- * The data returned will be different for guests vs. logged-in users.
+ * The data returned will be different for guests vs. logged-in users,
+ * and React Query handles this automatically thanks to the dynamic queryKey.
  */
 export const useExercises = () => {
-    const { currentUser } = useAuth();
+    const { userProfile, userLoading } = useAuth();
 
     return useQuery({
-        // The queryKey changes when the user logs in or out, triggering a refetch.
-        queryKey: ['exercises', currentUser?.uid || 'guest'],
-        queryFn: () => fetchExercises(currentUser),
-        staleTime: 1000 * 60 * 5, // 5 minutes
+        queryKey: ['exercises', userProfile?.id || 'guest'],
+        queryFn: fetchExercises,
+        staleTime: 1000 * 60 * 60, // 1 hour
         refetchOnWindowFocus: false,
+        enabled: !userLoading,
     });
 };

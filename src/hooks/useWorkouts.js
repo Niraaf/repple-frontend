@@ -1,7 +1,6 @@
-// src/hooks/useWorkouts.js
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/authContext';
+import { getAuthHeaders } from '@/lib/apiClient';
 
 // =================================================================
 //  1. Query Keys Factory (No changes needed)
@@ -9,7 +8,7 @@ import { useAuth } from '@/contexts/authContext';
 const workoutsKeys = {
     all: ['workouts'],
     lists: () => [...workoutsKeys.all, 'list'],
-    list: (userId) => [...workoutsKeys.lists(), userId], // Key is now user-specific
+    list: (userId) => [...workoutsKeys.lists(), userId],
     details: () => [...workoutsKeys.all, 'detail'],
     detail: (id) => [...workoutsKeys.details(), id],
 };
@@ -20,57 +19,64 @@ const workoutsKeys = {
 //  These functions now require firebaseUid to be passed.
 // =================================================================
 
-// GET /api/workouts?firebaseUid=...
-const getWorkouts = async (firebaseUid) => {
-    const res = await fetch(`/api/workouts?firebaseUid=${firebaseUid}`);
+const getWorkouts = async () => {
+    const headers = await getAuthHeaders();
+    const res = await fetch('/api/workouts', { headers });
     if (!res.ok) throw new Error('Failed to fetch workouts');
     return res.json();
 };
 
-// GET /api/workouts/:id
-const getWorkoutById = async (workoutId, firebaseUid) => {
-    if (!workoutId || !firebaseUid) return null;
-
-    const res = await fetch(`/api/workouts/${workoutId}?firebaseUid=${firebaseUid}`);
-
+const getWorkoutById = async (workoutId) => {
+    if (!workoutId) return null;
+    const headers = await getAuthHeaders();
+    const res = await fetch(`/api/workouts/${workoutId}`, { headers });
     if (!res.ok) {
         const errorInfo = await res.json();
         const error = new Error(errorInfo.message || 'An error occurred while fetching the data.');
         error.status = res.status;
         throw error;
     }
-
     return res.json();
 };
 
-// POST /api/workouts
-const createWorkout = async ({ workoutData, firebaseUid }) => {
+const createWorkout = async (workoutData) => {
+    const headers = await getAuthHeaders();
     const res = await fetch('/api/workouts', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...workoutData, firebaseUid }),
+        headers,
+        body: JSON.stringify(workoutData),
     });
-    //if (!res.ok) throw new Error('Failed to create workout');
+    if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Failed to create workout');
+    }
     return res.json();
 };
 
-// PUT /api/workouts/:id
-const updateWorkout = async ({ workoutId, workoutData, firebaseUid }) => {
+const updateWorkout = async ({ workoutId, workoutData }) => {
+    const headers = await getAuthHeaders();
     const res = await fetch(`/api/workouts/${workoutId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...workoutData, firebaseUid }),
+        headers,
+        body: JSON.stringify(workoutData),
     });
-    if (!res.ok) throw new Error('Failed to update workout');
+    if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Failed to update workout');
+    }
     return res.json();
 };
 
-// DELETE /api/workouts/:id
-const deleteWorkout = async ({ workoutId, firebaseUid }) => {
-    const res = await fetch(`/api/workouts/${workoutId}?firebaseUid=${firebaseUid}`, {
+const deleteWorkout = async (workoutId) => {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`/api/workouts/${workoutId}`, {
         method: 'DELETE',
+        headers,
     });
-    if (!res.ok) throw new Error('Failed to delete workout');
+    if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Failed to delete workout');
+    }
     return true;
 };
 
@@ -78,59 +84,46 @@ const deleteWorkout = async ({ workoutId, firebaseUid }) => {
 // =================================================================
 //  3. Custom React Query Hooks (UPDATED)
 // =================================================================
-/**
- * Hook to fetch a list of workouts for a specific user.
- * @param {string} firebaseUid - The Firebase UID of the user.
- */
-export const useUserWorkouts = (firebaseUid) => {
+export const useUserWorkouts = (initialData = null) => {
+    const { user } = useAuth();
     return useQuery({
-        queryKey: workoutsKeys.list(firebaseUid),
-        queryFn: () => getWorkouts(firebaseUid),
-        // The query will only run if a firebaseUid is provided.
-        enabled: !!firebaseUid,
+        queryKey: workoutsKeys.list(user?.id),
+        queryFn: getWorkouts,
+        initialData: initialData,
+        enabled: !!user,
+        staleTime: 1000 * 60 * 60
     });
 };
 
-/**
- * Hook to fetch the details of a single workout by its ID.
- * @param {string} workoutId - The UUID of the workout.
- * @param {string} firebaseUid - The Firebase UID of the current user.
- * @param {object} options - Optional React Query options.
- */
-export const useWorkoutDetails = (workoutId, firebaseUid, options = {}) => {
+export const useWorkoutDetails = (workoutId, initialData = null) => {
+    const { user } = useAuth();
     return useQuery({
         queryKey: workoutsKeys.detail(workoutId),
-        queryFn: () => getWorkoutById(workoutId, firebaseUid),
-        enabled: workoutId !== "new" && !!firebaseUid,
+        queryFn: () => getWorkoutById(workoutId),
+        initialData: initialData,
+        enabled: !!user && !!workoutId && workoutId !== 'new',
         refetchOnWindowFocus: false,
         retry: (failureCount, error) => {
             if (error.status >= 400 && error.status < 500) return false;
             return failureCount < 2;
         },
-        ...options
     });
 };
 
-/**
- * Hook providing a mutation function to create a new workout.
- */
 export const useCreateWorkout = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: createWorkout, // Expects { workoutData, firebaseUid }
+        mutationFn: createWorkout,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: workoutsKeys.lists() });
         },
     });
 };
 
-/**
- * Hook providing a mutation function to update an existing workout.
- */
 export const useUpdateWorkout = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: updateWorkout, // Expects { workoutId, workoutData, firebaseUid }
+        mutationFn: updateWorkout,
         onSuccess: (data, variables) => {
             const { workoutId } = variables;
             queryClient.invalidateQueries({ queryKey: workoutsKeys.lists() });
@@ -139,15 +132,11 @@ export const useUpdateWorkout = () => {
     });
 };
 
-/**
- * Hook providing a mutation function to delete a workout.
- */
 export const useDeleteWorkout = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: deleteWorkout, // Expects { workoutId, firebaseUid }
-        onSuccess: (data, variables) => {
-            const { workoutId } = variables;
+        mutationFn: deleteWorkout,
+        onSuccess: (data, workoutId) => {
             queryClient.invalidateQueries({ queryKey: workoutsKeys.lists() });
             queryClient.removeQueries({ queryKey: workoutsKeys.detail(workoutId) });
         },

@@ -1,12 +1,7 @@
-"use client";
-
-import { useAuth } from "@/contexts/authContext";
-
-export default function Dashboard() {
-    const { currentUser } = useAuth();
+export default function LandingPage() {
 
     return (
-        <div>
+        <div className="w-full min-h-screen flex flex-col items-center justify-center">
             Landing page content goes here.
         </div>
     )

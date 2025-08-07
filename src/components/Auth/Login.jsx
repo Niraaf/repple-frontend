@@ -1,23 +1,21 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import { doSignInWithEmailAndPassword, handleGoogleAuth } from "@/firebase/auth";
+import { doSignInWithEmailAndPassword, handleGoogleAuth } from "@/supabase/auth";
 import { useAuth } from "@/contexts/authContext";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 const Login = () => {
     const router = useRouter();
-    const { userLoggedIn, userLoading, setMergingFlag } = useAuth();
+    const { userLoggedIn, userLoading } = useAuth();
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [isSigningIn, setIsSigningIn] = useState(false);
     const [error, setError] = useState(null);
 
-    // This effect handles redirecting users who are already logged in.
     useEffect(() => {
-        // Only check for redirects once the initial auth state is resolved.
         if (!userLoading && userLoggedIn) {
             router.push("/dashboard");
         }
@@ -30,12 +28,13 @@ const Login = () => {
         setError(null);
         setIsSigningIn(true);
         try {
-            await doSignInWithEmailAndPassword(email, password);
-            // On success, the AuthProvider's listener will update the state
-            // and the useEffect above will handle the redirect.
+            const { error } = await doSignInWithEmailAndPassword(email, password);
+            if (error) throw error;
+            setIsSigningIn(false);
+            router.push("/dashboard");
         } catch (err) {
             setError(err.message);
-            setIsSigningIn(false); // Only reset loading state on error
+            setIsSigningIn(false);
         }
     };
 
@@ -45,18 +44,15 @@ const Login = () => {
 
         setError(null);
         setIsSigningIn(true);
-        setMergingFlag(true); // Signal to AuthProvider that a merge might happen
         try {
-            await handleGoogleAuth();
+            const { error } = await handleGoogleAuth();
+            if (error) throw error;
         } catch (err) {
             setError(err.message);
             setIsSigningIn(false);
-        } finally {
-            setMergingFlag(false); // Always reset the flag
         }
     };
 
-    // Show a unified loading/redirecting state
     if (userLoading || userLoggedIn) {
         return (
             <div className="flex justify-center items-center min-h-screen">

@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useEffect } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";

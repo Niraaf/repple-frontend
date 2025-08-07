@@ -1,17 +1,5 @@
 'use client';
 
-import Link from 'next/link';
-
-/**
- * A "dumb" component for displaying the current state of the workout player.
- * @param {string} playerState - The current state ('resting', 'active_set', etc.).
- * @param {string} workoutName - The name of the overall workout.
- * @param {object} currentStep - The full step object for the current step.
- * @param {object} nextStep - The full step object for the next step.
- * @param {number} currentSetNumber - The current set number for an exercise.
- * @param {number} totalSteps - The total number of steps in the workout.
- * @param {number} currentStepNumber - The index of the current step + 1.
- */
 export default function CurrentStepDisplay({
     playerState,
     workoutName,
@@ -32,11 +20,11 @@ export default function CurrentStepDisplay({
         switch (playerState) {
             case 'resting':
                 // If the current step is a dedicated REST block, show what's next.
-                if (currentStep.step_type === 'REST' && nextStep?.exercise) {
+                if (currentStep.step_type === 'REST' && nextStep?.exercise?.name) {
                     return <p className="mt-2 text-lg text-blue-600 font-medium">Next Up: {nextStep.exercise.name}</p>;
                 }
                 // Otherwise, it's an intra-set rest.
-                return <p className="mt-2 text-lg text-blue-600 font-medium">Resting... Next Up: {currentStep?.exercise.name} Set {currentSetNumber} of {currentStep.target_sets}</p>;
+                return <p className="mt-2 text-lg text-blue-600 font-medium">Next Up: {currentStep?.exercise.name} Set {currentSetNumber} of {currentStep.target_sets}</p>;
 
             case 'active_set':
                 if (!exerciseDetails) return null;

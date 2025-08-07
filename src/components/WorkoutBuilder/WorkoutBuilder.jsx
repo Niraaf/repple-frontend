@@ -7,12 +7,13 @@ import { useRouter } from "next/navigation";
 import { DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, arrayMove, rectSortingStrategy } from "@dnd-kit/sortable";
 import { restrictToWindowEdges } from "@dnd-kit/modifiers";
-import Link from "next/link";
 
 // Components
 import ExerciseCard from "./ExerciseCard";
 import RestBlock from "./RestBlock";
 import ExerciseModal from "../ExerciseModal/ExerciseModal";
+import ErrorDisplay from "./ErrorDisplay";
+import WorkoutStats from "./WorkoutStats";
 
 // Hooks & Context
 import { useWorkoutDetails, useCreateWorkout, useUpdateWorkout, useDeleteWorkout } from "@/hooks/useWorkouts";
@@ -24,33 +25,8 @@ import { useAlertModal } from "@/hooks/useAlertModal"
 import { useAuth } from "@/contexts/authContext";
 import toast from 'react-hot-toast';
 
-const ErrorDisplay = ({ error }) => {
-  let title = "Error";
-  let message = "Failed to load the workout. Please try again later.";
 
-  if (error?.status === 404) {
-    title = "Workout Not Found";
-    message = "This workout may have been deleted, or the link is incorrect.";
-  } else if (error?.status === 403) {
-    title = "Access Denied";
-    message = "You do not have permission to view this workout.";
-  } else if (error?.status === 400) {
-    title = "Invalid URL";
-    message = "The workout link is malformed.";
-  }
-
-  return (
-    <div className="text-center p-8">
-      <h2 className="text-2xl font-bold text-red-600 mb-2">{title}</h2>
-      <p className="text-gray-500 mb-6">{message}</p>
-      <Link href="/workouts" className="bg-purple-500 text-white font-bold py-2 px-4 rounded-full hover:bg-purple-600 transition">
-        Back to My Workouts
-      </Link>
-    </div>
-  );
-};
-
-export default function WorkoutBuilder({ workoutId }) {
+export default function WorkoutBuilder({ workoutId, initialData }) {
   const router = useRouter();
   const { userProfile } = useAuth();
   const isNewWorkout = workoutId === "new";
@@ -64,22 +40,13 @@ export default function WorkoutBuilder({ workoutId }) {
   const [isPublic, setIsPublic] = useState(false);
   const [isEditMode, setIsEditMode] = useState(isNewWorkout);
   const [steps, setSteps] = useState([]);
+  const [initialState, setInitialState] = useState({ /* ... */ });
 
-  // State for tracking unsaved changes
-  const [initialState, setInitialState] = useState({
-    name: "Untitled Workout",
-    steps: [],
-    description: "",
-    isPublic: false
-  });
   const { hasUnsavedChanges, setHasUnsavedChanges } = useUnsavedChanges();
   useUnsavedChangesWarning();
 
-  // Data Fetching & Mutations from our new consolidated hook
-  const { data: existingWorkout, isLoading, isError, error } = useWorkoutDetails(
-    workoutId,
-    userProfile?.firebase_uid
-  );
+  // Data Fetching & Mutations
+  const { data: existingWorkout, isLoading, isError, error } = useWorkoutDetails(workoutId, initialData);
   const { mutateAsync: createWorkout, isPending: isCreating } = useCreateWorkout();
   const { mutateAsync: updateWorkout, isPending: isUpdating } = useUpdateWorkout();
   const { mutate: deleteWorkout, isPending: isDeleting } = useDeleteWorkout();
@@ -87,33 +54,47 @@ export default function WorkoutBuilder({ workoutId }) {
   const isSaving = isCreating || isUpdating;
 
   const isOwner = useMemo(() => {
-    if (isNewWorkout) {
-      return true;
-    }
-
-    if (!existingWorkout || !userProfile) {
-      return false;
-    }
-
-    return existingWorkout?.created_by_user_id === userProfile.id;
+    if (isNewWorkout) return true;
+    return existingWorkout?.created_by_user_id === userProfile?.id;
   }, [isNewWorkout, existingWorkout, userProfile]);
 
-  // Effect to populate the form when editing an existing workout
   useEffect(() => {
-    if (existingWorkout) {
-      const initialData = {
-        name: existingWorkout.name || "Untitled Workout",
-        steps: existingWorkout.workout_steps || [],
-        description: existingWorkout.description || "",
-        isPublic: existingWorkout.is_public || false,
+    if (isNewWorkout) {
+      // If it's a new workout, define the clean initial state here.
+      const newWorkoutState = {
+        name: "Untitled Workout",
+        steps: [],
+        description: "",
+        isPublic: false
       };
-      setWorkoutName(initialData.name);
-      setSteps(initialData.steps);
-      setDescription(initialData.description);
-      setIsPublic(initialData.isPublic);
-      setInitialState(initialData); // Set the complete initial state
+      // Set both the active state and the "original" state at the same time.
+      setWorkoutName(newWorkoutState.name);
+      setSteps(newWorkoutState.steps);
+      setDescription(newWorkoutState.description);
+      setIsPublic(newWorkoutState.isPublic);
+      setInitialState(newWorkoutState);
+    } else if (initialData || existingWorkout) {
+      // Use the data from the server if it exists.
+      const dataToLoad = initialData || existingWorkout;
+      const loadedSteps = (dataToLoad.workout_steps || []).map(step => ({
+        ...step,
+        // Ensure every step has a unique key for dnd-kit, even from the DB
+        id: step.id || uuidv4()
+      }));
+
+      const initialDataObj = {
+        name: dataToLoad.name || "Untitled Workout",
+        steps: loadedSteps,
+        description: dataToLoad.description || "",
+        isPublic: dataToLoad.is_public || false,
+      };
+      setWorkoutName(initialDataObj.name);
+      setSteps(initialDataObj.steps);
+      setDescription(initialDataObj.description);
+      setIsPublic(initialDataObj.isPublic);
+      setInitialState(initialDataObj);
     }
-  }, [existingWorkout]);
+  }, [isNewWorkout, existingWorkout, initialData]);
 
   // Effect to track unsaved changes by comparing current state to initial state
   useEffect(() => {
@@ -135,10 +116,7 @@ export default function WorkoutBuilder({ workoutId }) {
     if (isStarting || !userProfile) return;
 
     try {
-      const newSession = await createSession({
-        workoutId: workoutId,
-        firebaseUid: userProfile.firebase_uid
-      });
+      const newSession = await createSession(workoutId);
       router.push(`/session/${newSession.id}`);
 
     } catch (error) {
@@ -149,7 +127,7 @@ export default function WorkoutBuilder({ workoutId }) {
       });
     }
   };
-  
+
   const cleanAndMergeSteps = (steps) => {
     let wasChanged = false;
     if (steps.length < 2) {
@@ -306,7 +284,7 @@ export default function WorkoutBuilder({ workoutId }) {
     try {
       let savedWorkout;
       if (isNewWorkout) {
-        const promise = createWorkout({ workoutData, firebaseUid: userProfile?.firebase_uid });
+        const promise = createWorkout(workoutData);
 
         toast.promise(promise, {
           loading: 'Saving new workout...',
@@ -318,7 +296,7 @@ export default function WorkoutBuilder({ workoutId }) {
         setHasUnsavedChanges(false);
         router.push(`/workouts/${savedWorkout.id}`);
       } else {
-        const promise = updateWorkout({ workoutId, workoutData, firebaseUid: userProfile?.firebase_uid });
+        const promise = updateWorkout({ workoutId, workoutData });
 
         toast.promise(promise, {
           loading: 'Updating workout...',
@@ -365,21 +343,12 @@ export default function WorkoutBuilder({ workoutId }) {
     const toastId = toast.loading('Deleting workout...');
 
     try {
-      // 3. Await the actual delete mutation promise.
-      await deleteWorkout({ workoutId, firebaseUid: userProfile?.firebase_uid });
-
-      // 4. If the promise succeeds, update the toast to a "success" message.
-      //    We pass the original toastId to update it in place.
+      await deleteWorkout(workoutId);
       toast.success('Workout successfully deleted!', { id: toastId });
-
-      // 5. Redirect the user.
-      router.push('/workouts');
+      router.replace('/workouts');
 
     } catch (error) {
-      // 6. If the promise fails, first dismiss the loading toast.
       toast.dismiss(toastId);
-
-      // Then, show our more detailed, blocking Alert Modal for the critical error.
       showAlert({
         title: "Deletion Failed",
         message: error.message || "Could not delete the workout. Please try again."
@@ -389,40 +358,8 @@ export default function WorkoutBuilder({ workoutId }) {
     }
   };
 
-  if (isLoading || !userProfile) {
-    return <div className="flex justify-center items-center h-screen">Loading workout...</div>;
-  }
-
-  if (isError) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <ErrorDisplay error={error} />
-      </div>
-    );
-  }
-
-  const formatLastPerformed = (dateStr) => {
-    if (!dateStr) return "Never";
-    const date = new Date(dateStr);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const diffTime = today.getTime() - date.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (date.getTime() >= today.getTime()) return "Today";
-    if (diffDays === 1) return "Yesterday";
-    return `${diffDays} days ago`;
-  };
-
-  const WorkoutStats = ({ workout }) => (
-    <div className="flex justify-center items-center gap-4 text-xs text-gray-500 mb-2  rounded-full">
-      <span>💪 {workout.exercise_count || 0} Exercises</span>
-      <span>•</span>
-      <span>⏱️ ~{workout.estimated_duration_minutes || 0} min</span>
-      <span>•</span>
-      <span>🗓️ Last performed: {formatLastPerformed(workout.last_performed)}</span>
-    </div>
-  );
+  if (isLoading || !userProfile) { return <div className="flex justify-center items-center h-screen">Loading workout...</div>; }
+  if (isError) { return <ErrorDisplay error={error} />; }
 
   return (
     <DndContext
@@ -465,8 +402,9 @@ export default function WorkoutBuilder({ workoutId }) {
             )}
           </div>
 
-          {!isEditMode && existingWorkout && (
-            <WorkoutStats workout={existingWorkout} />
+          {/* Stats (View Mode Only) */}
+          {!isEditMode && (initialData || existingWorkout) && (
+            <WorkoutStats workout={initialData || existingWorkout} />
           )}
 
           {/* Action Buttons */}

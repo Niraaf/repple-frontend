@@ -1,7 +1,9 @@
+"use client";
+
 import React from 'react';
 import { useExercises } from '@/hooks/useExercises';
-import { useExerciseFilterOptions } from '@/hooks/useExerciseFilterOptions'; // <-- New Name
-import { useFilteredExercises } from '@/hooks/useFilteredExercises'; // <-- New Name
+import { useExerciseFilterOptions } from '@/hooks/useExerciseFilterOptions';
+import { useFilteredExercises } from '@/hooks/useFilteredExercises';
 import FilterControls from './FilterControls';
 import ExerciseList from './ExerciseList';
 
@@ -16,8 +18,7 @@ export default function ExerciseModal({ onClose, onAddExercise, addedExerciseIds
         activeFilters,
         handleFilterChange,
         filteredExercises
-    } = useFilteredExercises(exercises); // No need for '|| []' if the hook handles it.
-
+    } = useFilteredExercises(exercises);
     // Combine loading and error states.
     const isLoading = isLoadingExercises || isLoadingFilters;
     const isError = isExercisesError || isFiltersError;

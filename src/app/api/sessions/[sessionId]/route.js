@@ -1,31 +1,17 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/supabase/supabase';
+import { supabaseAdmin as supabase } from '@/supabase/supabaseAdmin';
+import { getAuthenticatedUser } from '@/lib/authHelper';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-/**
- * GET: Fetches all data required to run a specific workout session.
- * This includes the session record, the full workout plan, and any previously logged sets.
- */
 export async function GET(req, { params }) {
+    const { user, error: authError } = await getAuthenticatedUser(req);
+    if (authError) return authError;
+
     try {
         const { sessionId } = await params;
-
-        // 1. Validate the session ID format.
         if (!UUID_REGEX.test(sessionId)) {
             return NextResponse.json({ message: "Invalid session ID format." }, { status: 400 });
-        }
-
-        // 2. Get the current user's ID (Dev-only auth pattern).
-        const { searchParams } = new URL(req.url);
-        const firebaseUid = searchParams.get('firebaseUid');
-        if (!firebaseUid) {
-            return NextResponse.json({ message: 'Missing firebaseUid to fetch session details.' }, { status: 400 });
-        }
-
-        const { data: user, error: userError } = await supabase.from('users').select('id').eq('firebase_uid', firebaseUid).single();
-        if (userError || !user) {
-            return NextResponse.json({ message: 'User not found' }, { status: 404 });
         }
 
         // 3. Fetch the session and all its related data in one powerful query.
@@ -94,5 +80,30 @@ export async function GET(req, { params }) {
     } catch (error) {
         console.error(`Error fetching session:`, error);
         return NextResponse.json({ message: `Failed to fetch session`, error: error.message }, { status: 500 });
+    }
+}
+
+export async function DELETE(req, { params }) {
+    const { user, error: authError } = await getAuthenticatedUser(req);
+    if (authError) return authError;
+
+    try {
+        const { sessionId } = await params;
+        if (!UUID_REGEX.test(sessionId)) {
+            return NextResponse.json({ message: "Invalid session ID format." }, { status: 400 });
+        }
+
+        const { error } = await supabase
+            .from('sessions')
+            .delete()
+            .eq('id', sessionId)
+            .eq('user_id', user.id);
+
+        if (error) throw error;
+        return NextResponse.json({ message: "Session deleted successfully" }, { status: 200 });
+
+    } catch (error) {
+        console.error(`Error deleting session:`, error);
+        return NextResponse.json({ message: "Internal Server Error", error: error.message }, { status: 500 });
     }
 }

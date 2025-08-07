@@ -1,27 +1,17 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/supabase/supabase';
+import { supabaseAdmin as supabase } from '@/supabase/supabaseAdmin'; // Use the ADMIN client
+import { getAuthenticatedUser } from '@/lib/authHelper';
 
+/**
+ * API Route to fetch exercises.
+ * - If the user is a guest (no auth token), it returns only public, official exercises.
+ * - If the user is logged in (valid auth token), it returns all public exercises
+ * PLUS the user's own private custom exercises.
+ */
 export async function GET(req) {
     try {
-        // Instead of verifying a token, we get the UID from the URL's query parameters.
-        const { searchParams } = new URL(req.url);
-        const firebaseUid = searchParams.get('firebaseUid');
+        const { user } = await getAuthenticatedUser(req);
 
-        let user = null;
-
-        // If a UID was provided, look up the user's internal ID.
-        // ⚠️ This part is INSECURE because we are trusting the client.
-        if (firebaseUid) {
-            const { data: userData, error: userError } = await supabase
-                .from('users')
-                .select('id')
-                .eq('firebase_uid', firebaseUid)
-                .single();
-            if (userError) console.warn("User lookup failed for provided UID:", firebaseUid);
-            else user = userData;
-        }
-
-        // Build the base query
         let query = supabase
             .from('exercises')
             .select(`
@@ -33,12 +23,13 @@ export async function GET(req) {
                 exercise_mechanics ( mechanics ( id, name ) )
             `);
 
-        // Modify the query based on whether we found a user
         if (user) {
-            // Logged-in user: get public OR their own private exercises
+            // If we have a logged-in user, fetch public exercises OR their own private ones.
+            console.log(`Fetching exercises for user: ${user.id}`);
             query = query.or(`is_public.eq.true,created_by_user_id.eq.${user.id}`);
         } else {
-            // Guest user: get only public exercises
+            // If no user, they are a guest. Fetch only public exercises.
+            console.log("Fetching exercises for a guest user.");
             query = query.eq('is_public', true);
         }
 
@@ -46,7 +37,6 @@ export async function GET(req) {
 
         if (error) throw error;
 
-        // Format the data for the frontend (same as before)
         const formattedExercises = data.map(ex => ({
             id: ex.id,
             name: ex.name,

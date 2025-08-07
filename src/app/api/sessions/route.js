@@ -1,28 +1,19 @@
-import { NextResponse } from "next/server";
-import { supabase } from "@/supabase/supabase";
+import { NextResponse } from 'next/server';
+import { supabaseAdmin as supabase } from '@/supabase/supabaseAdmin';
+import { getAuthenticatedUser } from '@/lib/authHelper';
 
 export async function POST(req) {
+    const { user, error: authError } = await getAuthenticatedUser(req);
+    if (authError) return authError;
+
     try {
         const body = await req.json();
-        const { workoutId, firebaseUid } = body;
+        const { workoutId } = body;
 
-        if (!firebaseUid || !workoutId) {
-            return NextResponse.json({ message: "Missing required fields: workoutId and firebaseUid" }, { status: 400 });
+        if (!workoutId) {
+            return NextResponse.json({ message: "Missing workoutId" }, { status: 400 });
         }
 
-        const { data: user, error: userError } = await supabase
-            .from('users')
-            .select('id')
-            .eq('firebase_uid', firebaseUid)
-            .single();
-
-        if (userError || !user) {
-            return NextResponse.json({ message: 'User not found' }, { status: 404 });
-        }
-
-        // Create the new session record.
-        // started_at is set to now(), and ended_at is NULL by default,
-        // which marks this session as "active".
         const { data: newSession, error: insertError } = await supabase
             .from('sessions')
             .insert({
@@ -30,12 +21,11 @@ export async function POST(req) {
                 workout_id: workoutId,
                 started_at: new Date().toISOString(),
             })
-            .select() // .select() returns the newly created row
+            .select()
             .single();
 
         if (insertError) throw insertError;
-
-        return NextResponse.json(newSession, { status: 201 }); // 201 Created
+        return NextResponse.json(newSession, { status: 201 });
 
     } catch (err) {
         console.error("Server error creating session:", err);

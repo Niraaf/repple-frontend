@@ -1,4 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@/contexts/authContext';
+import { getAuthHeaders } from '@/lib/apiClient';
 
 // --- Query Keys Factory ---
 const sessionsKeys = {
@@ -14,24 +16,24 @@ const sessionsKeys = {
 /**
  * Calls the backend API to create a new workout session record.
  */
-const createSession = async ({ workoutId, firebaseUid }) => {
+const createSession = async (workoutId) => {
+    const headers = await getAuthHeaders();
     const res = await fetch('/api/sessions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ workoutId, firebaseUid }),
+        headers,
+        body: JSON.stringify({ workoutId }),
     });
-
     if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.message || 'Failed to start workout session');
     }
-
     return res.json();
 };
 
-const getSessionById = async (sessionId, firebaseUid) => {
-    if (!sessionId || !firebaseUid) return null;
-    const res = await fetch(`/api/sessions/${sessionId}?firebaseUid=${firebaseUid}`);
+const getSessionById = async (sessionId) => {
+    if (!sessionId) return null;
+    const headers = await getAuthHeaders();
+    const res = await fetch(`/api/sessions/${sessionId}`, { headers });
     if (!res.ok) {
         const errorInfo = await res.json();
         const error = new Error(errorInfo.message || 'An error occurred while fetching the session.');
@@ -41,11 +43,12 @@ const getSessionById = async (sessionId, firebaseUid) => {
     return res.json();
 };
 
-const logSet = async ({ setData, firebaseUid }) => {
+const logSet = async (setData) => {
+    const headers = await getAuthHeaders();
     const res = await fetch('/api/logged_sets', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...setData, firebaseUid }),
+        headers,
+        body: JSON.stringify(setData),
     });
     if (!res.ok) {
         const errorData = await res.json();
@@ -54,11 +57,12 @@ const logSet = async ({ setData, firebaseUid }) => {
     return res.json();
 };
 
-const logRest = async ({ restData, firebaseUid }) => {
+const logRest = async (restData) => {
+    const headers = await getAuthHeaders();
     const res = await fetch('/api/logged_rests', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...restData, firebaseUid }),
+        headers,
+        body: JSON.stringify(restData),
     });
     if (!res.ok) {
         const errorData = await res.json();
@@ -67,17 +71,30 @@ const logRest = async ({ restData, firebaseUid }) => {
     return res.json();
 };
 
-const finishSession = async ({ sessionId, firebaseUid }) => {
+const finishSession = async (sessionId) => {
+    const headers = await getAuthHeaders();
     const res = await fetch(`/api/sessions/${sessionId}/finish`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ firebaseUid }),
+        headers,
     });
     if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.message || 'Failed to finish session');
     }
     return res.json();
+};
+
+const deleteSession = async (sessionId) => {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`/api/sessions/${sessionId}`, {
+        method: 'DELETE',
+        headers,
+    });
+    if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Failed to delete session');
+    }
+    return true;
 };
 
 // =================================================================
@@ -97,14 +114,14 @@ export const useCreateSession = () => {
 /**
  * Hook to fetch all the details required to run a workout session.
  * @param {string} sessionId - The UUID of the session.
- * @param {string} firebaseUid - The Firebase UID of the current user.
  * @param {object} options - Optional React Query options.
  */
-export const useSessionDetails = (sessionId, firebaseUid, options = {}) => {
+export const useSessionDetails = (sessionId, options = {}) => {
+    const { userProfile, userLoading } = useAuth();
     return useQuery({
         queryKey: sessionsKeys.detail(sessionId),
-        queryFn: () => getSessionById(sessionId, firebaseUid),
-        enabled: !!sessionId && !!firebaseUid && (options.enabled ?? true),
+        queryFn: () => getSessionById(sessionId),
+        enabled: !!sessionId && !!userProfile && !userLoading,
         refetchOnWindowFocus: false,
         retry: (failureCount, error) => {
             if (error.status >= 400 && error.status < 500) return false;
@@ -137,14 +154,12 @@ export const useLogRest = () => {
     return useMutation({
         mutationFn: logRest,
         onSuccess: (newlyLoggedRest) => {
-            // Optimistically update the session cache with the new rest log
             const sessionKey = sessionsKeys.detail(newlyLoggedRest.session_id);
 
             queryClient.setQueryData(sessionKey, (oldData) => {
                 if (!oldData) return oldData;
                 return {
                     ...oldData,
-                    // Make sure the logged_rests array exists, then add the new one
                     logged_rests: [...(oldData.logged_rests || []), newlyLoggedRest],
                 };
             });
@@ -156,6 +171,16 @@ export const useFinishSession = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: finishSession,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: sessionsKeys.active() });
+        },
+    });
+};
+
+export const useDeleteSession = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: deleteSession,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: sessionsKeys.active() });
         },

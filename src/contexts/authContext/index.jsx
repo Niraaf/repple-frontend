@@ -1,10 +1,7 @@
 'use client';
 
-import React, { useEffect, useContext, useState, useRef } from "react";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "@/firebase/firebase";
-import { supabase } from "@/supabase/supabase";
-import { doSignInAnonymously, doSignOut as firebaseSignOut } from "@/firebase/auth";
+import React, { useEffect, useContext, useState } from "react";
+import { createSupabaseBrowserClient } from "@/supabase/supabaseClient";
 
 const AuthContext = React.createContext();
 
@@ -13,81 +10,66 @@ export function useAuth() {
 }
 
 export function AuthProvider({ children }) {
-    const [currentUser, setCurrentUser] = useState(null);
+    const [user, setUser] = useState(null);
     const [userProfile, setUserProfile] = useState(null);
     const [userLoggedIn, setUserLoggedIn] = useState(false);
-    const [userLoading, setUserLoading] = useState(true);
-
-    const isIntentionalSignOut = useRef(false);
-    const isMergingAccounts = useRef(false);
+    const [userLoading, setUserLoading] = useState(true); // Start as true
+    const [supabase] = useState(() => createSupabaseBrowserClient());
 
     useEffect(() => {
-        const syncAndFetchProfile = async (user) => {
-            try {
-                const { data: profile, error } = await supabase
-                    .from("users")
-                    .upsert({ firebase_uid: user.uid, email: user.email }, { onConflict: 'firebase_uid' })
-                    .select()
-                    .single();
+        // This function now handles the entire process of updating the user session.
+        const updateUserSession = async (sessionUser) => {
+            setUser(sessionUser);
+            setUserLoggedIn(!!sessionUser);
 
-                if (error) throw error;
-                setUserProfile(profile);
-            } catch (error) {
-                console.error("Error syncing user profile:", error.message);
+            if (sessionUser) {
+                // If a user is logged in, fetch their corresponding profile.
+                try {
+                    const { data: profile, error } = await supabase
+                        .from('users')
+                        .select('*')
+                        .eq('id', sessionUser.id)
+                        .single();
+
+                    if (error) throw error;
+                    setUserProfile(profile);
+                } catch (error) {
+                    console.error("Could not fetch user profile:", error);
+                    setUserProfile(null);
+                }
+            } else {
+                // If no user, ensure profile is also null.
                 setUserProfile(null);
             }
+            // Only set loading to false after all user-related data is settled.
+            setUserLoading(false);
         };
 
-        const unsubscribe = onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                // User is signed in.
-                setCurrentUser(user);
-                setUserLoggedIn(!user.isAnonymous);
-                await syncAndFetchProfile(user);
-                setUserLoading(false);
-            } else {
-                // User is signed out.
-                setCurrentUser(null);
-                setUserProfile(null);
-                setUserLoggedIn(false);
+        // Get the initial session on page load.
+        const getInitialSession = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            await updateUserSession(session?.user ?? null);
+        };
 
-                // Only sign in as a guest if this wasn't an intentional sign-out.
-                if (isIntentionalSignOut.current || isMergingAccounts.current) {
-                    // If the user signed out intentionally or is merging, just reset the flag.
-                    if (isIntentionalSignOut.current) isIntentionalSignOut.current = false;
-                } else {
-                    // This is a true new visitor, so create a guest session.
-                    await doSignInAnonymously();
-                }
-                setUserLoading(false);
+        getInitialSession();
+
+        // Listen for future changes in the authentication state.
+        const { data: authListener } = supabase.auth.onAuthStateChange(
+            (event, session) => {
+                updateUserSession(session?.user ?? null);
             }
-        });
+        );
 
-        return () => unsubscribe();
+        return () => {
+            authListener.subscription.unsubscribe();
+        };
     }, []);
 
-    // We wrap the sign-out function to set our intent flag.
-    const signOut = async () => {
-        isIntentionalSignOut.current = true;
-        await firebaseSignOut();
-    };
-
-    const setMergingFlag = (isMerging) => {
-        isMergingAccounts.current = isMerging;
-    };
-
-    const value = {
-        currentUser,
-        userProfile,
-        userLoggedIn,
-        userLoading,
-        signOut,
-        setMergingFlag,
-    };
+    const value = { user, userProfile, userLoggedIn, userLoading };
 
     return (
         <AuthContext.Provider value={value}>
-            {!userLoading && children}
+            {children}
         </AuthContext.Provider>
     );
 }

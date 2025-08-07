@@ -7,11 +7,11 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/authContext";
 import { useAlertModal } from "@/hooks/useAlertModal";
 
-export default function WorkoutList() {
+export default function WorkoutList({ initialWorkouts }) {
     const router = useRouter();
     const { userProfile } = useAuth();
     const { showAlert, AlertModalComponent } = useAlertModal();
-    const { data: workouts, isLoading, isError } = useUserWorkouts(userProfile?.firebase_uid);
+    const { data: workouts, isLoading, isError } = useUserWorkouts(initialWorkouts);
     const { mutateAsync: createSession, isPending: isStartingSession } = useCreateSession();
 
     const handleCreate = () => {
@@ -25,10 +25,7 @@ export default function WorkoutList() {
     const handleQuickStart = async (workoutId) => {
         if (isStartingSession || !userProfile) return;
         try {
-            const newSession = await createSession({
-                workoutId: workoutId,
-                firebaseUid: userProfile.firebase_uid
-            });
+            const newSession = await createSession(workoutId);
             router.push(`/session/${newSession.id}`);
         } catch (error) {
             console.error("Failed to start session:", error);
