@@ -10,7 +10,7 @@ export const ReadyView = ({ sessionData, currentStep, advanceState }) => {
             <p className="mt-2 text-lg text-blue-600 font-medium mb-8">First up: {currentStep?.exercise?.name}</p>
             <button
                 onClick={() => advanceState({ type: 'BEGIN_WORKOUT' })}
-                className="bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 text-white font-bold py-4 px-10 rounded-full shadow-lg transition transform hover:scale-105"
+                className="bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 text-white font-bold py-4 px-10 rounded-full shadow-lg transition transform hover:scale-105 cursor-pointer"
             >
                 BEGIN WORKOUT
             </button>

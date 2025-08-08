@@ -16,7 +16,7 @@ const sessionsKeys = {
 /**
  * Calls the backend API to create a new workout session record.
  */
-const createSession = async (workoutId) => {
+const createSession = async ({ workoutId }) => {
     const headers = await getAuthHeaders();
     const res = await fetch('/api/sessions', {
         method: 'POST',

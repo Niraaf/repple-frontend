@@ -407,14 +407,14 @@ export default function WorkoutBuilder({ workoutId, initialData }) {
                 <button
                   onClick={() => setIsModalOpen(true)}
                   disabled={isProcessing}
-                  className="bg-white/30 hover:bg-white/50 font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer"
+                  className="bg-white/30 hover:bg-white/50 font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   ➕ Add Exercise
                 </button>
                 <button
                   onClick={handleAddRest}
                   disabled={isProcessing}
-                  className="bg-white/30 hover:bg-white/50 font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer"
+                  className="bg-white/30 hover:bg-white/50 font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   ⏱️ Add Rest
                 </button>
@@ -422,7 +422,7 @@ export default function WorkoutBuilder({ workoutId, initialData }) {
                   onClick={handleSaveWorkout}
                   disabled={isProcessing}
                   className="bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 
-                  text-white font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer"
+                  text-white font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isProcessing ? "💾 Saving..." : "💾 Save Workout"}
                 </button>
@@ -430,7 +430,7 @@ export default function WorkoutBuilder({ workoutId, initialData }) {
                   <button
                     onClick={handleDeleteWorkout}
                     disabled={isProcessing}
-                    className="bg-red-500 hover:bg-red-600 text-white font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer"
+                    className="bg-red-500 hover:bg-red-600 text-white font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isProcessing ? "Deleting..." : "🗑️ Delete"}
                   </button>
@@ -441,9 +441,9 @@ export default function WorkoutBuilder({ workoutId, initialData }) {
                 <div className="flex gap-4">
                   <button
                     className="bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 
-                            font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer"
+                            font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={handleStartWorkout}
-                    disabled={isProcessing || isStarting}
+                    disabled={isStarting}
                   >
                     ▶️ Start
                   </button>
@@ -454,8 +454,8 @@ export default function WorkoutBuilder({ workoutId, initialData }) {
                         setIsEditMode(true);
                       }
                     }}
-                    disabled={isProcessing}
-                    className="bg-white/30 hover:bg-white/50 font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer"
+                    disabled={isStarting}
+                    className="bg-white/30 hover:bg-white/50 font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     ✏️ Edit
                   </button>
@@ -465,7 +465,6 @@ export default function WorkoutBuilder({ workoutId, initialData }) {
                 <div className="flex gap-4">
                   <button
                     onClick={() => alert("Copies workout to non-owner user profile (TO IMPLEMENT)")}
-                    disabled={isProcessing}
                     className="bg-white/30 hover:bg-white/50 font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer"
                   >
                     Copy Workout to Profile
