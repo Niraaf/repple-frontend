@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/authContext";
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
 import { useUnsavedChanges } from "@/contexts/unsavedChangesContext";
 import { useConfirmationModal } from "@/hooks/useConfirmationModal";
 import MobileNavModal from "./MobileNavModal";

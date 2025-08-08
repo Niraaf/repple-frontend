@@ -6,7 +6,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import Navbar from "@/components/Navbar/Navbar";
 import BlobBackground from "@/components/BlobBackground/BlobBackground";
-import { useState } from "react"; // <-- Import useState
+import NextTopLoader from "nextjs-toploader";
+import { useState } from "react";
 
 export default function Providers({ children }) {
     // THE FIX:
@@ -23,21 +24,30 @@ export default function Providers({ children }) {
     }));
 
     return (
-        <QueryClientProvider client={queryClient}>
-            <AuthProvider>
-                <UnsavedChangesProvider>
+        <>
+            <NextTopLoader
+                showSpinner={true}
+                color="#4ade80"
+                height={3}
+                crawlSpeed={200}
+                easing="ease"
+            />
+            <QueryClientProvider client={queryClient}>
+                <AuthProvider>
+                    <UnsavedChangesProvider>
 
-                    <BlobBackground />
+                        <BlobBackground />
 
-                    <div className="relative z-10">
-                        <Navbar />
-                        {children}
-                    </div>
+                        <div className="relative z-10">
+                            <Navbar />
+                            {children}
+                        </div>
 
-                    <Toaster position="top-center" reverseOrder={false} />
+                        <Toaster position="top-center" reverseOrder={false} />
 
-                </UnsavedChangesProvider>
-            </AuthProvider>
-        </QueryClientProvider>
+                    </UnsavedChangesProvider>
+                </AuthProvider>
+            </QueryClientProvider>
+        </>
     );
 }

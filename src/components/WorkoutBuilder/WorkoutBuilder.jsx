@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import isEqual from "fast-deep-equal";
 import { v4 as uuidv4 } from 'uuid';
-import { useRouter } from "next/navigation";
+import { useRouter } from 'nextjs-toploader/app';
 import { DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, arrayMove, rectSortingStrategy } from "@dnd-kit/sortable";
 import { restrictToWindowEdges } from "@dnd-kit/modifiers";

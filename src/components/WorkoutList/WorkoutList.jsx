@@ -3,7 +3,7 @@
 import { useUserWorkouts } from "@/hooks/useWorkouts";
 import { useCreateSession } from "@/hooks/useSession";
 import WorkoutCard from "./WorkoutCard";
-import { useRouter } from "next/navigation";
+import { useRouter } from 'nextjs-toploader/app';
 import { useAuth } from "@/contexts/authContext";
 import { useAlertModal } from "@/hooks/useAlertModal";
 

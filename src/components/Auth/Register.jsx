@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/authContext";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter } from 'nextjs-toploader/app';
 import { doCreateUserWithEmailAndPassword, handleGoogleAuth } from "@/supabase/auth";
 
 const Register = () => {

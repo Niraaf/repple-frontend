@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { doSignInWithEmailAndPassword, handleGoogleAuth } from "@/supabase/auth";
 import { useAuth } from "@/contexts/authContext";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter } from 'nextjs-toploader/app';
 
 const Login = () => {
     const router = useRouter();
