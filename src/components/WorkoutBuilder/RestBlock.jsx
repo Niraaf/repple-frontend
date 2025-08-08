@@ -4,7 +4,7 @@ import React, { useEffect } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-export default function RestBlock({ id, inputId, step, index, isEditMode, onBlur, onChange, onDelete }) {
+export default function RestBlock({ id, step, index, isEditMode, isProcessing, onBlur, onChange, onDelete }) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
 
     const style = {
@@ -21,7 +21,7 @@ export default function RestBlock({ id, inputId, step, index, isEditMode, onBlur
             className="flex flex-col items-center justify-center w-75 h-60 rounded-xl p-3 bg-yellow-50/50 backdrop-blur-md relative border-4 border-b-0 border-white/30"
         >
             {/* Draggable Handle */}
-            <div {...attributes} {...(isEditMode ? listeners : {})} className={`w-full flex justify-center pb-2 ${isEditMode ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}`}>
+            <div {...attributes} {...(isEditMode || !isProcessing ? listeners : {})} className={`w-full flex justify-center pb-2 ${isEditMode || !isProcessing ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}`}>
                 <span className="text-sm font-medium text-yellow-800">⏱️ Rest</span>
             </div>
 
@@ -34,7 +34,7 @@ export default function RestBlock({ id, inputId, step, index, isEditMode, onBlur
             {isEditMode && (
                 <button
                     onClick={onDelete}
-                    className="absolute top-2 right-2 text-gray-400 hover:text-red-500 bg-white/50 rounded-full w-6 h-6 flex items-center justify-center text-sm transition"
+                    className="absolute top-2 right-2 text-gray-400 hover:text-red-500 rounded-full w-6 h-6 flex items-center justify-center text-sm transition cursor-pointer"
                 >
                     ✕
                 </button>
@@ -46,7 +46,7 @@ export default function RestBlock({ id, inputId, step, index, isEditMode, onBlur
                     type="text"
                     inputMode="numeric"
                     value={step.target_duration_seconds || ''}
-                    readOnly={!isEditMode}
+                    readOnly={!isEditMode || isProcessing}
                     onBlur={() => onBlur('target_duration_seconds')}
                     onChange={(e) => onChange('target_duration_seconds', e.target.value)}
                     className="remove-arrows w-16 text-center py-1 border border-gray-200 rounded-md bg-white 

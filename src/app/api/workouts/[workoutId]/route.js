@@ -35,29 +35,29 @@ export async function GET(req, { params }) {
 }
 
 export async function PUT(req, { params }) {
-  const { user, error: authError } = await getAuthenticatedUser(req);
-  if (authError) return authError;
+    const { userProfile, error: authError } = await getAuthenticatedUser(req);
+    if (authError) return authError;
 
-  try {
-    const { workoutId } = await params;
-    const body = await req.json();
-    const { name, description, is_public, steps } = body;
+    try {
+        const { workoutId } = await params;
+        const { name, description, is_public, steps } = await req.json();
 
-    const { data: updatedWorkout, error: rpcError } = await supabase.rpc('update_workout_with_steps', {
-      p_workout_id: workoutId,
-      p_user_id: user.id,
-      p_name: name,
-      p_description: description || null,
-      p_is_public: is_public || false,
-      p_steps: steps
-    });
+        const { data: updatedWorkout, error: rpcError } = await supabase.rpc('update_workout_with_steps', {
+            p_workout_id: workoutId,
+            p_user_id: userProfile.id,
+            p_name: name,
+            p_description: description || null,
+            p_is_public: is_public || false,
+            p_steps: steps
+        });
 
-    if (rpcError) throw rpcError;
-    return NextResponse.json(updatedWorkout[0], { status: 200 });
+        if (rpcError) throw rpcError;
+        
+        return NextResponse.json(updatedWorkout, { status: 200 });
 
-  } catch (error) {
-    return NextResponse.json({ message: "Failed to update workout", error: error.message }, { status: 500 });
-  }
+    } catch (error) {
+        return NextResponse.json({ message: "Failed to update workout", error: error.message }, { status: 500 });
+    }
 }
 
 export async function DELETE(req, { params }) {

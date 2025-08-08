@@ -5,7 +5,7 @@ import { CSS } from "@dnd-kit/utilities";
 import React, { useState, useEffect } from 'react';
 
 // A small sub-component for the Rep Target input
-const RepTargetInput = ({ value, isEditMode, onBlur, onChange }) => {
+const RepTargetInput = ({ value, isEditMode, isProcessing, onBlur, onChange }) => {
     useEffect(() => {
         const stringValue = String(value || '');
         const isRange = stringValue.includes('-');
@@ -14,7 +14,7 @@ const RepTargetInput = ({ value, isEditMode, onBlur, onChange }) => {
         setMode(newMode);
     }, [value]);
 
-    const [mode, setMode] = useState('single'); // Default to single
+    const [mode, setMode] = useState('single');
 
     const handleModeChange = (newMode) => {
         setMode(newMode);
@@ -72,26 +72,29 @@ const RepTargetInput = ({ value, isEditMode, onBlur, onChange }) => {
             <div className="flex justify-between items-center">
                 <span className="text-gray-500">Rep Target</span>
                 <div className="flex text-xs border border-gray-200 rounded-md overflow-hidden">
-                    <button onClick={() => handleModeChange('single')} className={`px-2 py-0.5 ${mode === 'single' ? 'bg-blue-200' : 'bg-white'}`}>Single</button>
-                    <button onClick={() => handleModeChange('range')} className={`px-2 py-0.5 ${mode === 'range' ? 'bg-blue-200' : 'bg-white'}`}>Range</button>
-                    <button onClick={() => handleModeChange('failure')} className={`px-2 py-0.5 ${mode === 'failure' ? 'bg-blue-200' : 'bg-white'}`}>AMRAP</button>
+                    <button onClick={() => handleModeChange('single')} disabled={isProcessing} className={`px-2 py-0.5 ${mode === 'single' ? 'bg-blue-200' : 'bg-white'}`}>Single</button>
+                    <button onClick={() => handleModeChange('range')} disabled={isProcessing} className={`px-2 py-0.5 ${mode === 'range' ? 'bg-blue-200' : 'bg-white'}`}>Range</button>
+                    <button onClick={() => handleModeChange('failure')} disabled={isProcessing} className={`px-2 py-0.5 ${mode === 'failure' ? 'bg-blue-200' : 'bg-white'}`}>AMRAP</button>
                 </div>
             </div>
             {mode === 'single' && (
-                <input
-                    type="text"
-                    inputMode="numeric"
-                    value={value}
-                    onBlur={onBlur}
-                    onChange={(e) => handleSingleRepChange(e.target.value)}
-                    className="remove-arrows w-full text-center py-1 border border-gray-200 rounded-md bg-white"
-                />
+                <div className="flex gap-2 items-center justify-center box-border ">
+                    <input
+                        type="text"
+                        inputMode="numeric"
+                        value={value}
+                        onBlur={onBlur}
+                        readOnly={isProcessing}
+                        onChange={(e) => handleSingleRepChange(e.target.value)}
+                        className="remove-arrows w-14 text-center py-1 border border-gray-200 rounded-md bg-white read-only:bg-transparent read-only:border-transparent read-only:ring-0 read-only:font-semibold read-only:text-gray-700"
+                    />
+                </div>
             )}
             {mode === 'range' && (
-                <div className="flex gap-2 items-center justify-end">
-                    <input type="text" inputMode="numeric" value={String(value).split('-')[0] || ''} onBlur={handleRangeBlur} onChange={(e) => handleRangeChange('min', e.target.value)} className="remove-arrows w-14 text-center py-1 border border-gray-200 rounded-md bg-white" />
+                <div className="flex gap-2 items-center justify-center box-border ">
+                    <input type="text" inputMode="numeric" value={String(value).split('-')[0] || ''} onBlur={handleRangeBlur} readOnly={isProcessing} onChange={(e) => handleRangeChange('min', e.target.value)} className="remove-arrows text-center w-14 py-1 border border-gray-200 rounded-md bg-white read-only:bg-transparent read-only:border-transparent read-only:ring-0 read-only:font-semibold read-only:text-gray-700" />
                     <span>-</span>
-                    <input type="text" inputMode="numeric" value={String(value).split('-')[1] || ''} onBlur={handleRangeBlur} onChange={(e) => handleRangeChange('max', e.target.value)} className="remove-arrows w-14 text-center py-1 border border-gray-200 rounded-md bg-white" />
+                    <input type="text" inputMode="numeric" value={String(value).split('-')[1] || ''} onBlur={handleRangeBlur} readOnly={isProcessing} onChange={(e) => handleRangeChange('max', e.target.value)} className="remove-arrows text-center w-14 py-1 border border-gray-200 rounded-md bg-white read-only:bg-transparent read-only:border-transparent read-only:ring-0 read-only:font-semibold read-only:text-gray-700" />
                 </div>
             )}
         </div>
@@ -99,13 +102,13 @@ const RepTargetInput = ({ value, isEditMode, onBlur, onChange }) => {
 };
 
 
-export default function ExerciseCard({ id, step, index, isEditMode, onBlur, onChange, onDelete }) {
+export default function ExerciseCard({ id, step, index, isEditMode, isProcessing, onBlur, onChange, onDelete }) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
 
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
-        boxShadow: isDragging ? "0 4px 15px rgba(0,0,0,0.2)" : "0 1px 3px rgba(0,0,0,0.1)",
+        boxShadow: isDragging ? "0 4px 15px rgba(162, 78, 78, 0.2)" : "0 1px 3px rgba(0,0,0,0.1)",
         zIndex: isDragging ? 45 : "auto",
         backgroundColor: isDragging ? "rgba(255, 255, 255, 0.7)" : ""
     };
@@ -121,18 +124,19 @@ export default function ExerciseCard({ id, step, index, isEditMode, onBlur, onCh
             <div className="flex flex-col gap-1 text-[11px]">
                 <div className="flex justify-between items-center">
                     <span className="text-gray-500">Sets</span>
-                    <input type="text" inputMode="numeric" value={step.target_sets || ''} readOnly={!isEditMode} onBlur={() => onBlur('target_sets')} onChange={(e) => onChange('target_sets', e.target.value)} className={inputBaseClasses} />
+                    <input type="text" inputMode="numeric" value={step.target_sets || ''} readOnly={!isEditMode || isProcessing} onBlur={() => onBlur('target_sets')} onChange={(e) => onChange('target_sets', e.target.value)} className={inputBaseClasses} />
                 </div>
 
                 {isTimed ? (
                     <div className="flex justify-between items-center">
                         <span className="text-gray-500">Hold (sec)</span>
-                        <input type="text" inputMode="numeric" value={step.target_duration_seconds || ''} readOnly={!isEditMode} onBlur={() => onBlur('target_duration_seconds')} onChange={(e) => onChange('target_duration_seconds', e.target.value)} className={inputBaseClasses} />
+                        <input type="text" inputMode="numeric" value={step.target_duration_seconds || ''} readOnly={!isEditMode || isProcessing} onBlur={() => onBlur('target_duration_seconds')} onChange={(e) => onChange('target_duration_seconds', e.target.value)} className={inputBaseClasses} />
                     </div>
                 ) : (
                     <RepTargetInput
                         value={step.target_reps || ''}
                         isEditMode={isEditMode}
+                        isProcessing={isProcessing}
                         onBlur={() => onBlur('target_reps')}
                         onChange={(newValue) => onChange('target_reps', newValue)}
                     />
@@ -141,7 +145,7 @@ export default function ExerciseCard({ id, step, index, isEditMode, onBlur, onCh
                 {!mechanics.some(m => m && m.name && m.name.toLowerCase().includes('stretching')) && (
                     <div className="flex justify-between items-center">
                         <span className="text-gray-500">Rest (sec)</span>
-                        <input type="text" inputMode="numeric" value={step.target_intra_set_rest_seconds || ''} readOnly={!isEditMode} onBlur={() => onBlur('target_intra_set_rest_seconds')} onChange={(e) => onChange('target_intra_set_rest_seconds', e.target.value)} className={inputBaseClasses} />
+                        <input type="text" inputMode="numeric" value={step.target_intra_set_rest_seconds || ''} readOnly={!isEditMode || isProcessing} onBlur={() => onBlur('target_intra_set_rest_seconds')} onChange={(e) => onChange('target_intra_set_rest_seconds', e.target.value)} className={inputBaseClasses} />
                     </div>
                 )}
             </div>
@@ -151,10 +155,10 @@ export default function ExerciseCard({ id, step, index, isEditMode, onBlur, onCh
     return (
         <div ref={setNodeRef} style={style} className="w-75 h-60 rounded-xl p-3 flex flex-col bg-white/30 backdrop-blur-md relative border-4 border-b-0 border-white/30">
             {/* Draggable Handle and Header */}
-            <div {...attributes} {...(isEditMode ? listeners : {})} className={`${isEditMode ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}`}>
+            <div {...attributes} {...(isEditMode || !isProcessing ? listeners : {})} className={`${isEditMode || !isProcessing ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}`}>
                 <div className="flex justify-between items-start mb-1">
                     <h3 className="font-semibold text-sm text-gray-800 leading-snug">⚔️ {exerciseDetails.name}</h3>
-                    {isEditMode && <button onClick={onDelete} className="absolute top-2 right-2 text-gray-300 hover:text-red-400 transition text-sm cursor-pointer w-6 h-6">✕</button>}
+                    {isEditMode && <button onClick={onDelete} disabled={isProcessing} className="absolute top-2 right-2 text-gray-300 hover:text-red-400 transition text-sm cursor-pointer w-6 h-6">✕</button>}
                 </div>
             </div>
 

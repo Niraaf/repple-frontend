@@ -41,6 +41,7 @@ export default function WorkoutBuilder({ workoutId, initialData }) {
   const [isEditMode, setIsEditMode] = useState(isNewWorkout);
   const [steps, setSteps] = useState([]);
   const [initialState, setInitialState] = useState({ /* ... */ });
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const { hasUnsavedChanges, setHasUnsavedChanges } = useUnsavedChanges();
   useUnsavedChangesWarning();
@@ -75,7 +76,7 @@ export default function WorkoutBuilder({ workoutId, initialData }) {
       setInitialState(newWorkoutState);
     } else if (initialData || existingWorkout) {
       // Use the data from the server if it exists.
-      const dataToLoad = initialData || existingWorkout;
+      const dataToLoad = existingWorkout || initialData;
       const loadedSteps = (dataToLoad.workout_steps || []).map(step => ({
         ...step,
         // Ensure every step has a unique key for dnd-kit, even from the DB
@@ -116,7 +117,7 @@ export default function WorkoutBuilder({ workoutId, initialData }) {
     if (isStarting || !userProfile) return;
 
     try {
-      const newSession = await createSession(workoutId);
+      const newSession = await createSession({ workoutId });
       router.push(`/session/${newSession.id}`);
 
     } catch (error) {
@@ -269,19 +270,18 @@ export default function WorkoutBuilder({ workoutId, initialData }) {
       if (!confirmed) return;
     }
 
-    const formattedSteps = cleanedSteps.map((step, index) => {
-      const { id, exercise, ...restOfStep } = step;
-      return { ...restOfStep, sequence_order: index + 1 };
-    });
-
     const workoutData = {
-      name: workoutName || "Untitled Workout",
+      name: workoutName,
       description: description,
       is_public: isPublic,
-      steps: formattedSteps
+      steps: cleanedSteps.map((step, index) => {
+        const { id, exercise, ...restOfStep } = step;
+        return { ...restOfStep, sequence_order: index + 1 };
+      }),
     };
 
     try {
+      setIsProcessing(true);
       let savedWorkout;
       if (isNewWorkout) {
         const promise = createWorkout(workoutData);
@@ -304,24 +304,14 @@ export default function WorkoutBuilder({ workoutId, initialData }) {
           error: 'Failed to save changes.',
         });
 
-        savedWorkout = await promise;
-        const newInitialState = {
-          name: workoutData.name,
-          description: workoutData.description,
-          isPublic: workoutData.is_public,
-          steps: steps
-        };
-        setInitialState(newInitialState);
-        setHasUnsavedChanges(false);
+        await promise;
         setIsEditMode(false);
       }
 
     } catch (error) {
       console.error("Failed to save workout:", error);
-      showAlert({
-        title: "Save Failed",
-        message: error.message || "An unexpected error occurred. Please try again."
-      });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -343,9 +333,10 @@ export default function WorkoutBuilder({ workoutId, initialData }) {
     const toastId = toast.loading('Deleting workout...');
 
     try {
+      setIsProcessing(true);
       await deleteWorkout(workoutId);
       toast.success('Workout successfully deleted!', { id: toastId });
-      router.replace('/workouts');
+      router.push('/workouts');
 
     } catch (error) {
       toast.dismiss(toastId);
@@ -355,6 +346,8 @@ export default function WorkoutBuilder({ workoutId, initialData }) {
       });
 
       console.error("Deletion failed:", error);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -386,7 +379,7 @@ export default function WorkoutBuilder({ workoutId, initialData }) {
               type="text"
               value={workoutName}
               onChange={(e) => setWorkoutName(e.target.value)}
-              readOnly={!isEditMode}
+              readOnly={!isEditMode || isProcessing}
               placeholder="Name your workout..."
               className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-gray-800 bg-transparent text-center focus:outline-none w-full"
             />
@@ -395,7 +388,7 @@ export default function WorkoutBuilder({ workoutId, initialData }) {
                 type="text"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                readOnly={!isEditMode}
+                readOnly={!isEditMode || isProcessing}
                 placeholder="Add a description..."
                 className="w-full text-center text-sm text-gray-500 bg-transparent focus:outline-none mt-2 read-only:ring-0 read-only:border-transparent"
               />
@@ -411,23 +404,35 @@ export default function WorkoutBuilder({ workoutId, initialData }) {
           <div className="flex flex-col md:flex-row justify-center gap-4 max-w-5xl text-sm md:text-base mb-2 relative">
             {isEditMode ? (
               <div className="flex gap-4">
-                <button onClick={() => setIsModalOpen(true)} className="bg-white/30 hover:bg-white/50 font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer">
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  disabled={isProcessing}
+                  className="bg-white/30 hover:bg-white/50 font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer"
+                >
                   ➕ Add Exercise
                 </button>
-                <button onClick={handleAddRest} className="bg-white/30 hover:bg-white/50 font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer">
+                <button
+                  onClick={handleAddRest}
+                  disabled={isProcessing}
+                  className="bg-white/30 hover:bg-white/50 font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer"
+                >
                   ⏱️ Add Rest
                 </button>
-                <button onClick={handleSaveWorkout} className="bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 
-                  text-white font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer" disabled={isSaving}>
-                  {isSaving ? "💾 Saving..." : "💾 Save Workout"}
+                <button
+                  onClick={handleSaveWorkout}
+                  disabled={isProcessing}
+                  className="bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 
+                  text-white font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer"
+                >
+                  {isProcessing ? "💾 Saving..." : "💾 Save Workout"}
                 </button>
                 {!isNewWorkout && (
                   <button
                     onClick={handleDeleteWorkout}
-                    disabled={isDeleting}
+                    disabled={isProcessing}
                     className="bg-red-500 hover:bg-red-600 text-white font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer"
                   >
-                    {isDeleting ? "Deleting..." : "🗑️ Delete"}
+                    {isProcessing ? "Deleting..." : "🗑️ Delete"}
                   </button>
                 )}
               </div>
@@ -438,7 +443,7 @@ export default function WorkoutBuilder({ workoutId, initialData }) {
                     className="bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 
                             font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer"
                     onClick={handleStartWorkout}
-                    disabled={isStarting || !userProfile}
+                    disabled={isProcessing || isStarting}
                   >
                     ▶️ Start
                   </button>
@@ -449,6 +454,7 @@ export default function WorkoutBuilder({ workoutId, initialData }) {
                         setIsEditMode(true);
                       }
                     }}
+                    disabled={isProcessing}
                     className="bg-white/30 hover:bg-white/50 font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer"
                   >
                     ✏️ Edit
@@ -459,6 +465,7 @@ export default function WorkoutBuilder({ workoutId, initialData }) {
                 <div className="flex gap-4">
                   <button
                     onClick={() => alert("Copies workout to non-owner user profile (TO IMPLEMENT)")}
+                    disabled={isProcessing}
                     className="bg-white/30 hover:bg-white/50 font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer"
                   >
                     Copy Workout to Profile
@@ -480,6 +487,7 @@ export default function WorkoutBuilder({ workoutId, initialData }) {
                   type="checkbox"
                   id="isPublicToggle"
                   checked={isPublic}
+                  readOnly={isProcessing}
                   onChange={(e) => setIsPublic(e.target.checked)}
                   className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
                 />
@@ -514,6 +522,7 @@ export default function WorkoutBuilder({ workoutId, initialData }) {
                       index={idx}
                       step={step}
                       isEditMode={isEditMode}
+                      isProcessing={isProcessing}
                       onBlur={(field) => handleStepBlur(idx, field)}
                       onChange={(field, value) => handleStepChange(idx, field, value)}
                       onDelete={() => handleDeleteStep(step.id)}
@@ -526,6 +535,7 @@ export default function WorkoutBuilder({ workoutId, initialData }) {
                       index={idx}
                       step={step}
                       isEditMode={isEditMode}
+                      isProcessing={isProcessing}
                       onBlur={(field) => handleStepBlur(idx, field)}
                       onChange={(field, value) => handleStepChange(idx, field, value)}
                       onDelete={() => handleDeleteStep(step.id)}

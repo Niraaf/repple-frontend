@@ -124,10 +124,10 @@ export const useUpdateWorkout = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: updateWorkout,
-        onSuccess: (data, variables) => {
-            const { workoutId } = variables;
+        onSuccess: (updatedWorkoutData) => {
+            const workoutId = updatedWorkoutData.id;
+            queryClient.setQueryData(workoutsKeys.detail(workoutId), updatedWorkoutData);
             queryClient.invalidateQueries({ queryKey: workoutsKeys.lists() });
-            queryClient.invalidateQueries({ queryKey: workoutsKeys.detail(workoutId) });
         },
     });
 };
