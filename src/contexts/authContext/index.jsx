@@ -17,7 +17,6 @@ export function AuthProvider({ children }) {
     const [supabase] = useState(() => createSupabaseBrowserClient());
 
     useEffect(() => {
-        // This function now handles the entire process of updating the user session.
         const updateUserSession = async (sessionUser) => {
             setUser(sessionUser);
             setUserLoggedIn(!!sessionUser);

@@ -18,10 +18,17 @@ export default function RestBlock({ id, step, index, isEditMode, isProcessing, o
         <div
             ref={setNodeRef}
             style={style}
-            className="flex flex-col items-center justify-center w-75 h-60 rounded-xl p-3 bg-yellow-50/50 backdrop-blur-md relative border-4 border-b-0 border-white/30"
-        >
+            className="flex flex-col items-center justify-center w-75 h-62 rounded-xl p-3 bg-yellow-50/50 backdrop-blur-md relative border-4 border-b-0 border-white/30"
+        >   
+            {/* Delete Button */}
+            <div className="w-full h-full absolute top-0 left-0 -z-1">
+                <div {...attributes} {...(isEditMode && !isProcessing ? listeners : {})} className={`flex justify-end items-start mb-1 p-3 ${isEditMode && !isProcessing ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}`}>
+                    {isEditMode && <button onClick={onDelete} disabled={isProcessing} className="text-gray-300 hover:text-red-400 transition text-sm cursor-pointer">✕</button>}
+                </div>
+            </div>
+
             {/* Draggable Handle */}
-            <div {...attributes} {...(isEditMode || !isProcessing ? listeners : {})} className={`w-full flex justify-center pb-2 ${isEditMode || !isProcessing ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}`}>
+            <div className={`w-full flex justify-center pb-2`}>
                 <span className="text-sm font-medium text-yellow-800">⏱️ Rest</span>
             </div>
 
@@ -29,16 +36,6 @@ export default function RestBlock({ id, step, index, isEditMode, isProcessing, o
             <div className="absolute -top-2 -left-2 bg-yellow-200 text-yellow-800 w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold shadow-sm">
                 {index + 1}
             </div>
-
-            {/* Delete Button */}
-            {isEditMode && (
-                <button
-                    onClick={onDelete}
-                    className="absolute top-2 right-2 text-gray-400 hover:text-red-500 rounded-full w-6 h-6 flex items-center justify-center text-sm transition cursor-pointer"
-                >
-                    ✕
-                </button>
-            )}
 
             {/* Input */}
             <div className="flex items-center gap-2">

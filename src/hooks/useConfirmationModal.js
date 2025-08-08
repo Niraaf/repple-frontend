@@ -10,24 +10,38 @@ export const useConfirmationModal = () => {
         });
     }, []);
 
-    const handleConfirm = () => {
-        modalState?.resolve(true);
+    const handleAction = (result) => {
+        modalState?.resolve(result);
         setModalState(null);
     };
 
-    const handleCancel = () => {
-        modalState?.resolve(false);
+    const handleClose = (result) => {
+        modalState?.resolve(result);
         setModalState(null);
     };
+
+    const buttons = modalState?.buttons || [
+        {
+            text: modalState?.cancelText || "Cancel",
+            onClick: () => handleAction(false),
+            variant: 'secondary'
+        },
+        {
+            text: modalState?.confirmText || "Confirm",
+            onClick: () => handleAction(true),
+            variant: modalState?.confirmVariant || 'default'
+        }
+    ];
 
     const ConfirmationModalComponent = modalState ? (
         <ConfirmationModal
             isOpen={!!modalState}
-            onConfirm={handleConfirm}
-            onCancel={handleCancel}
-            {...modalState}
+            onClose={() => handleClose(false)} 
+            title={modalState.title}
+            description={modalState.description}
+            buttons={buttons}
         />
     ) : null;
 
-    return { showConfirmation, ConfirmationModalComponent };
+    return { showConfirmation, ConfirmationModalComponent, handleClose };
 };

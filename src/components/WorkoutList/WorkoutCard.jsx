@@ -14,7 +14,7 @@ const formatLastPerformed = (dateStr) => {
     return `${diffDays} days ago`;
 };
 
-export default function WorkoutCard({ workout, onView, onQuickStart }) {
+export default function WorkoutCard({ workout, onView, onQuickStart, isProcessing }) {
     const handleQuickStartClick = (e) => {
         e.stopPropagation();
         onQuickStart(workout.id);
@@ -23,7 +23,9 @@ export default function WorkoutCard({ workout, onView, onQuickStart }) {
     return (
         <div
             onClick={() => onView(workout.id)}
-            className="w-full max-w-3xl backdrop-blur-md rounded-xl px-6 py-4 shadow-md hover:shadow-lg transition cursor-pointer flex justify-between items-center bg-white/30 hover:bg-white/50 border-4 border-b-0 border-white/30"
+            className={`w-full h-26 max-w-3xl backdrop-blur-md rounded-xl px-6 py-4 shadow-md hover:shadow-lg transition
+            flex justify-between items-center bg-white/30 hover:bg-white/50 border-4 border-b-0 border-white/30 cursor-pointer
+            ${isProcessing ? "opacity-50 cursor-not-allowed" : ""}`}
         >
             <div className="flex flex-col w-[80%]">
                 <h2 className="text-sm md:text-lg font-bold truncate">{workout.name}</h2>
@@ -37,8 +39,9 @@ export default function WorkoutCard({ workout, onView, onQuickStart }) {
 
             <button
                 onClick={handleQuickStartClick}
+                disabled={isProcessing}
                 className="bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 
-                     text-white font-bold px-5 py-3 rounded-full shadow-md transition cursor-pointer"
+                     text-white font-bold px-5 py-3 rounded-full shadow-md transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Quick Start"
             >
                 ▶

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/authContext";
 import { useSessionDetails, useLogSet, useLogRest, useFinishSession } from "@/hooks/useSession";
@@ -14,13 +14,7 @@ import PlayerTimer from '@/components/LiveSessionPlayer/PlayerTimer';
 import SetCompletionScreen from '@/components/LiveSessionPlayer/SetCompletionScreen';
 import { ReadyView } from './ReadyView';
 import { FinishedView } from './FinishedView';
-
-const ErrorDisplay = ({ message }) => (
-    <div className="text-center p-8">
-        <h2 className="text-2xl font-bold text-red-600 mb-2">Error</h2>
-        <p className="text-gray-500">{message}</p>
-    </div>
-);
+import SessionErrorDisplay from './SessionErrorDisplay';
 
 export default function LiveSessionPlayerPage() {
     const router = useRouter();
@@ -33,16 +27,16 @@ export default function LiveSessionPlayerPage() {
         stepIndex: 0,
         setNumber: 1,
     });
-
     const [seconds, setSeconds] = useState(0);
     const [isTimerActive, setIsTimerActive] = useState(false);
+    const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
 
     const { data: sessionData, isLoading, isError, error } = useSessionDetails(sessionId, {
         enabled: router.isReady && !!sessionId && !!userProfile,
     });
 
-    const { mutate: logSet } = useLogSet();
-    const { mutate: logRest } = useLogRest();
+    const { mutate: logSet, isError: isLogSetError, error: logSetError } = useLogSet();
+    const { mutate: logRest, isError: isLogRestError, error: logRestError } = useLogRest();
     const { mutate: finishSession } = useFinishSession();
 
     const timer = useTimer({ isActive: isTimerActive, setSeconds, setIsActive: setIsTimerActive });
@@ -51,6 +45,29 @@ export default function LiveSessionPlayerPage() {
     const steps = useMemo(() => sessionData?.workout?.workout_steps || [], [sessionData]);
     const currentStep = useMemo(() => steps[player.stepIndex], [steps, player.stepIndex]);
     const nextStep = useMemo(() => steps[player.stepIndex + 1], [steps, player.stepIndex]);
+
+    useEffect(() => {
+        // Only run this logic if we have session data AND the initial load is not yet marked as complete.
+        if (sessionData && !isInitialLoadComplete) {
+            if (sessionData.logged_sets?.length > 0) {
+                const loggedSets = sessionData.logged_sets;
+                const lastLoggedSet = [...loggedSets].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+                if (lastLoggedSet) {
+                    const lastStepIndex = steps.findIndex(step => step.exercise_id === lastLoggedSet.exercise_id);
+                    if (lastStepIndex !== -1) {
+                        const lastStep = steps[lastStepIndex];
+                        if (lastLoggedSet.set_number >= lastStep.target_sets) {
+                            setPlayer(prev => ({ ...prev, stepIndex: lastStepIndex + 1, setNumber: 1 }));
+                        } else {
+                            setPlayer(prev => ({ ...prev, stepIndex: lastStepIndex, setNumber: lastLoggedSet.set_number + 1 }));
+                        }
+                    }
+                }
+            }
+            // Mark the initial load as complete so this never runs again.
+            setIsInitialLoadComplete(true);
+        }
+    }, [sessionData, isInitialLoadComplete, steps]);
 
     const advanceState = (action) => {
         const currentStepForTransition = steps[player.stepIndex];
@@ -150,18 +167,18 @@ export default function LiveSessionPlayerPage() {
         }
     }, [player.state, currentStep]);
 
-    if (isLoading) {
+    if (isLoading && !isInitialLoadComplete) {
         return <div className="flex justify-center items-center h-screen text-lg text-gray-500 animate-pulse">Preparing your session...</div>;
     }
 
-    if (isError) {
-        return <div className="flex justify-center items-center h-screen"><ErrorDisplay message={error.message} /></div>;
-    }
+    if (isError) { return <SessionErrorDisplay error={error} />; }
 
     if (player.state === 'ready') {
         return <ReadyView
             sessionData={sessionData}
             currentStep={currentStep}
+            currentStepNumber={player.stepIndex + 1}
+            currentSetNumber={player.setNumber}
             advanceState={advanceState}
         />;
     }

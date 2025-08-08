@@ -21,10 +21,10 @@ export default function CurrentStepDisplay({
             case 'resting':
                 // If the current step is a dedicated REST block, show what's next.
                 if (currentStep.step_type === 'REST' && nextStep?.exercise?.name) {
-                    return <p className="mt-2 text-lg text-blue-600 font-medium">Next Up: {nextStep.exercise.name}</p>;
+                    return <p className="mt-2 text-lg text-gray-600 font-medium">Next Up: {nextStep.exercise.name}</p>;
                 }
                 // Otherwise, it's an intra-set rest.
-                return <p className="mt-2 text-lg text-blue-600 font-medium">Next Up: {currentStep?.exercise.name} Set {currentSetNumber} of {currentStep.target_sets}</p>;
+                return <p className="mt-2 text-lg text-gray-600 font-medium">Next Up: {currentStep?.exercise.name} Set {currentSetNumber} of {currentStep.target_sets}</p>;
 
             case 'active_set':
                 if (!exerciseDetails) return null;

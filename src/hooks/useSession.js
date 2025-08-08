@@ -97,6 +97,13 @@ const deleteSession = async (sessionId) => {
     return true;
 };
 
+const getActiveSession = async () => {
+    const headers = await getAuthHeaders();
+    const res = await fetch('/api/sessions/active', { headers });
+    if (!res.ok) throw new Error('Failed to fetch active session');
+    return res.json();
+};
+
 // =================================================================
 //  Custom React Query Hooks
 // =================================================================
@@ -184,5 +191,16 @@ export const useDeleteSession = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: sessionsKeys.active() });
         },
+    });
+};
+
+export const useActiveSession = () => {
+    const { user, userLoading } = useAuth();
+    return useQuery({
+        queryKey: sessionsKeys.active(),
+        queryFn: getActiveSession,
+        enabled: !userLoading && !!user,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
     });
 };

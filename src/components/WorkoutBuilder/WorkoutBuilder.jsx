@@ -12,7 +12,7 @@ import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 import ExerciseCard from "./ExerciseCard";
 import RestBlock from "./RestBlock";
 import ExerciseModal from "../ExerciseModal/ExerciseModal";
-import ErrorDisplay from "./ErrorDisplay";
+import WorkoutErrorDisplay from "./WorkoutErrorDisplay";
 import WorkoutStats from "./WorkoutStats";
 
 // Hooks & Context
@@ -48,11 +48,10 @@ export default function WorkoutBuilder({ workoutId, initialData }) {
 
   // Data Fetching & Mutations
   const { data: existingWorkout, isLoading, isError, error } = useWorkoutDetails(workoutId, initialData);
-  const { mutateAsync: createWorkout, isPending: isCreating } = useCreateWorkout();
-  const { mutateAsync: updateWorkout, isPending: isUpdating } = useUpdateWorkout();
-  const { mutate: deleteWorkout, isPending: isDeleting } = useDeleteWorkout();
-  const { mutateAsync: createSession, isPending: isStarting } = useCreateSession();
-  const isSaving = isCreating || isUpdating;
+  const { mutateAsync: createWorkout } = useCreateWorkout();
+  const { mutateAsync: updateWorkout } = useUpdateWorkout();
+  const { mutate: deleteWorkout } = useDeleteWorkout();
+  const { mutateAsync: createSession } = useCreateSession();
 
   const isOwner = useMemo(() => {
     if (isNewWorkout) return true;
@@ -61,25 +60,22 @@ export default function WorkoutBuilder({ workoutId, initialData }) {
 
   useEffect(() => {
     if (isNewWorkout) {
-      // If it's a new workout, define the clean initial state here.
       const newWorkoutState = {
         name: "Untitled Workout",
         steps: [],
         description: "",
         isPublic: false
       };
-      // Set both the active state and the "original" state at the same time.
       setWorkoutName(newWorkoutState.name);
       setSteps(newWorkoutState.steps);
       setDescription(newWorkoutState.description);
       setIsPublic(newWorkoutState.isPublic);
       setInitialState(newWorkoutState);
+      
     } else if (initialData || existingWorkout) {
-      // Use the data from the server if it exists.
       const dataToLoad = existingWorkout || initialData;
       const loadedSteps = (dataToLoad.workout_steps || []).map(step => ({
         ...step,
-        // Ensure every step has a unique key for dnd-kit, even from the DB
         id: step.id || uuidv4()
       }));
 
@@ -114,8 +110,9 @@ export default function WorkoutBuilder({ workoutId, initialData }) {
   );
 
   const handleStartWorkout = async () => {
-    if (isStarting || !userProfile) return;
+    if (isProcessing || !userProfile) return;
 
+    setIsProcessing(true);
     try {
       const newSession = await createSession({ workoutId });
       router.push(`/session/${newSession.id}`);
@@ -126,6 +123,7 @@ export default function WorkoutBuilder({ workoutId, initialData }) {
         title: "Error",
         message: "Could not start the workout session. Please try again."
       });
+      setIsProcessing(false);
     }
   };
 
@@ -248,13 +246,21 @@ export default function WorkoutBuilder({ workoutId, initialData }) {
   };
 
   const handleSaveWorkout = async () => {
-    if (isSaving || !steps.some(step => step.step_type === 'EXERCISE')) {
-      if (!isSaving) {
+    const hasRestAtStartOrEnd = steps[0].step_type === 'REST' || steps[steps.length - 1].step_type === 'REST';
+    if (isProcessing || !steps.some(step => step.step_type === 'EXERCISE') || hasRestAtStartOrEnd) {
+      if (!isProcessing) {
         showAlert({
           title: "Invalid Workout",
           message: "Please add at least one exercise before saving.",
         });
+        if (hasRestAtStartOrEnd) {
+          showAlert({
+            title: "Invalid Workout",
+            message: "Your workout cannot start or end with a rest block.",
+          });
+        }
       }
+
       return;
     }
 
@@ -316,7 +322,7 @@ export default function WorkoutBuilder({ workoutId, initialData }) {
   };
 
   const handleDeleteWorkout = async () => {
-    if (isDeleting) return;
+    if (isProcessing) return;
 
     const confirmed = await showConfirmation({
       title: "Delete this workout?",
@@ -352,7 +358,7 @@ export default function WorkoutBuilder({ workoutId, initialData }) {
   };
 
   if (isLoading || !userProfile) { return <div className="flex justify-center items-center h-screen">Loading workout...</div>; }
-  if (isError) { return <ErrorDisplay error={error} />; }
+  if (isError) { return <WorkoutErrorDisplay error={error} />; }
 
   return (
     <DndContext
@@ -443,7 +449,7 @@ export default function WorkoutBuilder({ workoutId, initialData }) {
                     className="bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 
                             font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={handleStartWorkout}
-                    disabled={isStarting}
+                    disabled={isProcessing}
                   >
                     ▶️ Start
                   </button>
@@ -454,7 +460,7 @@ export default function WorkoutBuilder({ workoutId, initialData }) {
                         setIsEditMode(true);
                       }
                     }}
-                    disabled={isStarting}
+                    disabled={isProcessing}
                     className="bg-white/30 hover:bg-white/50 font-bold px-5 py-2 rounded-full shadow-md transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     ✏️ Edit

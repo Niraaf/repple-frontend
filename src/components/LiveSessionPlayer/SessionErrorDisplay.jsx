@@ -1,19 +1,19 @@
 'use client';
 import Link from 'next/link';
 
-export default function ErrorDisplay({ error }) {
+export default function SessionErrorDisplay({ error }) {
     let title = "Error";
-    let message = "Failed to load the workout. Please try again later.";
+    let message = "Failed to load the session. Please try again later.";
 
     if (error?.status === 404) {
-        title = "Workout Not Found";
-        message = "This workout may have been deleted, or the link is incorrect.";
+        title = "Session Not Found";
+        message = "This session may have been deleted, or the link is incorrect.";
     } else if (error?.status === 403) {
         title = "Access Denied";
-        message = "You do not have permission to view this workout.";
+        message = "You do not have permission to view this session.";
     } else if (error?.status === 400) {
         title = "Invalid URL";
-        message = "The workout link is malformed.";
+        message = "The session link is malformed.";
     }
 
     return (

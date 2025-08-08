@@ -15,8 +15,7 @@ const workoutsKeys = {
 
 
 // =================================================================
-//  2. API Service Functions (UPDATED FOR DEV AUTH & NEW ROUTES)
-//  These functions now require firebaseUid to be passed.
+//  2. API Service Functions
 // =================================================================
 
 const getWorkouts = async () => {

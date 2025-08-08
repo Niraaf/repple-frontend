@@ -4,10 +4,12 @@ import { AuthProvider } from "@/contexts/authContext";
 import { UnsavedChangesProvider } from "@/contexts/unsavedChangesContext";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
-import Navbar from "@/components/Navbar/Navbar";
 import BlobBackground from "@/components/BlobBackground/BlobBackground";
 import NextTopLoader from "nextjs-toploader";
 import { useState } from "react";
+
+import Navbar from "@/components/Navbar/Navbar";
+import SessionManager from '@/components/SessionManager/SessionManager';
 
 export default function Providers({ children }) {
     // THE FIX:
@@ -35,16 +37,13 @@ export default function Providers({ children }) {
             <QueryClientProvider client={queryClient}>
                 <AuthProvider>
                     <UnsavedChangesProvider>
-
+                        <SessionManager />
                         <BlobBackground />
-
                         <div className="relative z-10">
                             <Navbar />
                             {children}
                         </div>
-
                         <Toaster position="top-center" reverseOrder={false} />
-
                     </UnsavedChangesProvider>
                 </AuthProvider>
             </QueryClientProvider>

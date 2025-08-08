@@ -6,6 +6,7 @@ import WorkoutCard from "./WorkoutCard";
 import { useRouter } from 'nextjs-toploader/app';
 import { useAuth } from "@/contexts/authContext";
 import { useAlertModal } from "@/hooks/useAlertModal";
+import { useState } from "react";
 
 export default function WorkoutList({ initialWorkouts }) {
     const router = useRouter();
@@ -13,19 +14,25 @@ export default function WorkoutList({ initialWorkouts }) {
     const { showAlert, AlertModalComponent } = useAlertModal();
     const { data: workouts, isLoading, isError } = useUserWorkouts(initialWorkouts);
     const { mutateAsync: createSession, isPending: isStartingSession } = useCreateSession();
+    const [isProcessing, setIsProcessing] = useState(false);
 
     const handleCreate = () => {
+        if (isProcessing) return;
+        setIsProcessing(true);
         router.push('/workouts/new');
     };
 
     const handleViewWorkout = (workoutId) => {
+        if (isProcessing) return;
+        setIsProcessing(true);
         router.push(`/workouts/${workoutId}`);
     };
 
     const handleQuickStart = async (workoutId) => {
         if (isStartingSession || !userProfile) return;
+        setIsProcessing(true);
         try {
-            const newSession = await createSession(workoutId);
+            const newSession = await createSession({ workoutId });
             router.push(`/session/${newSession.id}`);
         } catch (error) {
             console.error("Failed to start session:", error);
@@ -33,6 +40,7 @@ export default function WorkoutList({ initialWorkouts }) {
                 title: "Error",
                 message: "Could not start the workout session. Please try again."
             });
+            setIsProcessing(false);
         }
     };
 
@@ -52,6 +60,7 @@ export default function WorkoutList({ initialWorkouts }) {
                             workout={workout}
                             onView={handleViewWorkout}
                             onQuickStart={handleQuickStart}
+                            isProcessing={isProcessing}
                         />
                     ))}
                 </div>
@@ -73,13 +82,14 @@ export default function WorkoutList({ initialWorkouts }) {
 
             <button
                 className="mt-6 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 
-                         text-white font-bold py-3 px-8 rounded-full shadow-md transition cursor-pointer"
+                         text-white font-bold py-3 px-8 rounded-full shadow-md transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isProcessing}
                 onClick={handleCreate}
             >
                 + Create New Workout
             </button>
 
-            { AlertModalComponent }
+            {AlertModalComponent}
         </div>
     );
 }

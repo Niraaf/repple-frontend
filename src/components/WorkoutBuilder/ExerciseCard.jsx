@@ -153,12 +153,12 @@ export default function ExerciseCard({ id, step, index, isEditMode, isProcessing
     };
 
     return (
-        <div ref={setNodeRef} style={style} className="w-75 h-60 rounded-xl p-3 flex flex-col bg-white/30 backdrop-blur-md relative border-4 border-b-0 border-white/30">
+        <div ref={setNodeRef} style={style} className="w-75 h-62 rounded-xl p-3 flex flex-col bg-white/30 backdrop-blur-md relative border-4 border-b-0 border-white/30">
             {/* Draggable Handle and Header */}
-            <div {...attributes} {...(isEditMode || !isProcessing ? listeners : {})} className={`${isEditMode || !isProcessing ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}`}>
+            <div {...attributes} {...(isEditMode && !isProcessing ? listeners : {})} className={`${isEditMode && !isProcessing ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}`}>
                 <div className="flex justify-between items-start mb-1">
                     <h3 className="font-semibold text-sm text-gray-800 leading-snug">⚔️ {exerciseDetails.name}</h3>
-                    {isEditMode && <button onClick={onDelete} disabled={isProcessing} className="absolute top-2 right-2 text-gray-300 hover:text-red-400 transition text-sm cursor-pointer w-6 h-6">✕</button>}
+                    {isEditMode && <button onClick={onDelete} disabled={isProcessing} className="text-gray-300 hover:text-red-400 transition text-sm cursor-pointer">✕</button>}
                 </div>
             </div>
 

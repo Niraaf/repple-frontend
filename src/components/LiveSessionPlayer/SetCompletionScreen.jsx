@@ -85,7 +85,7 @@ export default function SetCompletionScreen({ step, nextStep, currentSetNumber, 
                     {showNextUpForStretch && (
                         <div className="text-center p-2 bg-blue-50 rounded-lg">
                             <p className="text-xs text-gray-500">NEXT UP</p>
-                            <p className="font-semibold text-blue-600">{nextStep?.exercise?.name || exercise.name} - Set {currentSetNumber + 1}</p>
+                            <p className="font-semibold text-gray-600">{nextStep?.exercise?.name || exercise.name} - Set {currentSetNumber + 1}</p>
                         </div>
                     )}
 
