@@ -359,7 +359,6 @@ export default function WorkoutBuilder({ workoutId, initialData }) {
       });
 
       console.error("Deletion failed:", error);
-    } finally {
       setIsProcessing(false);
     }
   };

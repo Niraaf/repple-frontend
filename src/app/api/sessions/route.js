@@ -2,6 +2,24 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin as supabase } from '@/supabase/supabaseAdmin';
 import { getAuthenticatedUser } from '@/lib/authHelper';
 
+export async function GET(req) {
+    const { userProfile, error: authError } = await getAuthenticatedUser(req);
+    if (authError) return authError;
+
+    try {
+        const { data: sessions, error: rpcError } = await supabase
+            .rpc('get_user_session_history', { p_user_id: userProfile.id });
+
+        if (rpcError) throw rpcError;
+
+        return NextResponse.json(sessions, { status: 200 });
+
+    } catch (error) {
+        console.error("Error fetching session history:", error);
+        return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
+    }
+}
+
 export async function POST(req) {
     const { user, error: authError } = await getAuthenticatedUser(req);
     if (authError) return authError;
@@ -17,7 +35,7 @@ export async function POST(req) {
         const { data: workoutPlan, error: workoutError } = await supabase
             .rpc('get_workout_details_for_user', {
                 p_workout_id: workoutId,
-                p_user_id: userProfile.id
+                p_user_id: user.id
             });
 
         if (workoutError) throw new Error("Workout plan not found.");

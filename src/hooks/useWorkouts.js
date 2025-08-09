@@ -2,9 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/authContext';
 import { getAuthHeaders } from '@/lib/apiClient';
 
-// =================================================================
-//  1. Query Keys Factory (No changes needed)
-// =================================================================
+// Query Keys Factory
+
 const workoutsKeys = {
     all: ['workouts'],
     lists: () => [...workoutsKeys.all, 'list'],
@@ -14,9 +13,7 @@ const workoutsKeys = {
 };
 
 
-// =================================================================
-//  2. API Service Functions
-// =================================================================
+// API Service Functions
 
 const getWorkouts = async () => {
     const headers = await getAuthHeaders();
@@ -80,9 +77,8 @@ const deleteWorkout = async (workoutId) => {
 };
 
 
-// =================================================================
-//  3. Custom React Query Hooks (UPDATED)
-// =================================================================
+// Custom React Query Hooks
+
 export const useUserWorkouts = (initialData = null) => {
     const { user } = useAuth();
     return useQuery({
@@ -90,7 +86,7 @@ export const useUserWorkouts = (initialData = null) => {
         queryFn: getWorkouts,
         initialData: initialData,
         enabled: !!user,
-        staleTime: 1000 * 60 * 60
+        staleTime: 1000 * 60 * 5,
     });
 };
 

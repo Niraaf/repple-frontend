@@ -9,13 +9,8 @@ const sessionsKeys = {
     detail: (id) => [...sessionsKeys.all, 'detail', id],
 };
 
-// =================================================================
-//  API Service Function
-// =================================================================
+//  API Service Functions
 
-/**
- * Calls the backend API to create a new workout session record.
- */
 const createSession = async ({ workoutId }) => {
     const headers = await getAuthHeaders();
     const res = await fetch('/api/sessions', {
@@ -104,25 +99,21 @@ const getActiveSession = async () => {
     return res.json();
 };
 
-// =================================================================
-//  Custom React Query Hooks
-// =================================================================
+const getUserSessions = async () => {
+    const headers = await getAuthHeaders();
+    const res = await fetch('/api/sessions', { headers }); 
+    if (!res.ok) throw new Error('Failed to fetch session history');
+    return res.json();
+};
 
-/**
- * Hook providing a mutation function to create a new workout session.
- * It expects an object like { workoutId, firebaseUid } to be passed to its mutate function.
- */
+//  Custom React Query Hooks
+
 export const useCreateSession = () => {
     return useMutation({
         mutationFn: createSession,
     });
 };
 
-/**
- * Hook to fetch all the details required to run a workout session.
- * @param {string} sessionId - The UUID of the session.
- * @param {object} options - Optional React Query options.
- */
 export const useSessionDetails = (sessionId, options = {}) => {
     const { userProfile, userLoading } = useAuth();
     return useQuery({
@@ -202,5 +193,16 @@ export const useActiveSession = () => {
         enabled: !userLoading && !!user,
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
+    });
+};
+
+export const useUserSessions = (initialData = null) => {
+    const { user } = useAuth();
+    return useQuery({
+        queryKey: ['sessions', 'list', user?.id],
+        queryFn: getUserSessions,
+        initialData: initialData,
+        enabled: !initialData && !!user,
+        staleTime: 1000 * 60 * 5,
     });
 };

@@ -15,7 +15,7 @@ export default function SetCompletionScreen({ step, nextStep, currentSetNumber, 
     const isBodyweight = exercise.equipments?.some(e => e.name === 'Bodyweight');
     // Local state for the form inputs
     const [weight, setWeight] = useState('');
-    const [reps, setReps] = useState(step.target_reps?.split('-')[1] || '10');
+    const [reps, setReps] = useState(step.target_reps === "AMRAP" ? '' : step.target_reps?.split('-')[1] || '10');
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -58,7 +58,7 @@ export default function SetCompletionScreen({ step, nextStep, currentSetNumber, 
                                             inputMode="numeric"
                                             pattern="[0-9]*.[0-9]*"
                                             value={weight}
-                                            placeholder='0'
+                                            placeholder="0"
                                             onChange={e => setWeight(e.target.value.replace(/[^0-9.]/g, ''))}
                                             autoFocus
                                             className={inputClasses}
@@ -74,6 +74,7 @@ export default function SetCompletionScreen({ step, nextStep, currentSetNumber, 
                                         inputMode="numeric"
                                         pattern="[0-9]*"
                                         value={reps}
+                                        placeholder="reps"
                                         onChange={e => setReps(e.target.value.replace(/[^0-9]/g, ''))}
                                         className={inputClasses}
                                     />

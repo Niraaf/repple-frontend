@@ -35,8 +35,8 @@ export default function LiveSessionPlayerPage() {
         enabled: router.isReady && !!sessionId && !!userProfile,
     });
 
-    const { mutate: logSet, isError: isLogSetError, error: logSetError } = useLogSet();
-    const { mutate: logRest, isError: isLogRestError, error: logRestError } = useLogRest();
+    const { mutate: logSet } = useLogSet();
+    const { mutate: logRest } = useLogRest();
     const { mutate: finishSession } = useFinishSession();
 
     const timer = useTimer({ isActive: isTimerActive, setSeconds, setIsActive: setIsTimerActive });
@@ -91,7 +91,7 @@ export default function LiveSessionPlayerPage() {
                         session_id: sessionId,
                         exercise_id: currentStepForTransition.exercise_id,
                         set_number: player.setNumber,
-                        duration_seconds: Math.round(timer.seconds),
+                        duration_seconds: Math.round(seconds),
                         ...action.payload,
                     });
 
@@ -123,7 +123,7 @@ export default function LiveSessionPlayerPage() {
                 if (action.type === 'FINISH_REST') {
                     const isIntraSetRest = currentStep.step_type === 'EXERCISE';
                     const restTarget = isIntraSetRest ? currentStep.target_intra_set_rest_seconds : currentStep.target_duration_seconds;
-                    const actual_duration = Math.round(timer.seconds < 0 ? restTarget + Math.abs(timer.seconds) : restTarget - timer.seconds);
+                    const actual_duration = Math.round(seconds < 0 ? restTarget + Math.abs(seconds) : restTarget - seconds);
 
                     logRest({
                         session_id: sessionId,
