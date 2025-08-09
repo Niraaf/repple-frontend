@@ -71,7 +71,7 @@ export default function WorkoutBuilder({ workoutId, initialData }) {
       setDescription(newWorkoutState.description);
       setIsPublic(newWorkoutState.isPublic);
       setInitialState(newWorkoutState);
-      
+
     } else if (initialData || existingWorkout) {
       const dataToLoad = existingWorkout || initialData;
       const loadedSteps = (dataToLoad.workout_steps || []).map(step => ({
@@ -246,6 +246,13 @@ export default function WorkoutBuilder({ workoutId, initialData }) {
   };
 
   const handleSaveWorkout = async () => {
+    if (!userProfile) {
+      showAlert({
+        title: "Not Logged In",
+        message: "Please log in to save your workout."
+      });
+      return;
+    }
     const hasRestAtStartOrEnd = steps[0].step_type === 'REST' || steps[steps.length - 1].step_type === 'REST';
     if (isProcessing || !steps.some(step => step.step_type === 'EXERCISE') || hasRestAtStartOrEnd) {
       if (!isProcessing) {
@@ -357,7 +364,7 @@ export default function WorkoutBuilder({ workoutId, initialData }) {
     }
   };
 
-  if (isLoading || !userProfile) { return <div className="flex justify-center items-center h-screen">Loading workout...</div>; }
+  if (isLoading) { return <div className="flex justify-center items-center h-screen">Loading workout...</div>; }
   if (isError) { return <WorkoutErrorDisplay error={error} />; }
 
   return (

@@ -26,7 +26,7 @@ const getWorkouts = async () => {
 };
 
 const getWorkoutById = async (workoutId) => {
-    if (!workoutId) return null;
+    if (!workoutId || workoutId === "new") return null;
     const headers = await getAuthHeaders();
     const res = await fetch(`/api/workouts/${workoutId}`, { headers });
     if (!res.ok) {

@@ -14,12 +14,21 @@ export async function POST(req) {
             return NextResponse.json({ message: "Missing workoutId" }, { status: 400 });
         }
 
+        const { data: workoutPlan, error: workoutError } = await supabase
+            .rpc('get_workout_details_for_user', {
+                p_workout_id: workoutId,
+                p_user_id: userProfile.id
+            });
+
+        if (workoutError) throw new Error("Workout plan not found.");
+
         const { data: newSession, error: insertError } = await supabase
             .from('sessions')
             .insert({
                 user_id: user.id,
                 workout_id: workoutId,
                 started_at: new Date().toISOString(),
+                workout_plan_snapshot: workoutPlan
             })
             .select()
             .single();
