@@ -162,17 +162,22 @@ export default function WorkoutBuilder({ workoutId, initialData }) {
   }
 
   const handleAddExercise = (exercise) => {
+    const isStretch = exercise.mechanics?.some(m => m.name === 'Stretching');
+
     const newExerciseStep = {
       id: uuidv4(), // Temporary client-side ID for dnd-kit and keys
       step_type: 'EXERCISE',
       exercise_id: exercise.id,
-      target_sets: 3,
-      target_reps: '8-12',
-      target_intra_set_rest_seconds: 60,
-      target_duration_seconds: 60,
+      target_sets: isStretch ? 2 : 3,
       notes: '',
-      // exercise details for immediate rendering on the card
-      exercise: exercise
+      exercise: exercise,
+      ...(isStretch
+        ? { target_duration_seconds: 30 }
+        : {
+          target_reps: '8-12',
+          target_intra_set_rest_seconds: 60
+        }
+      )
     };
 
     // Automatically add a rest block after the new exercise if the previous step wasn't a rest block
@@ -323,7 +328,6 @@ export default function WorkoutBuilder({ workoutId, initialData }) {
 
     } catch (error) {
       console.error("Failed to save workout:", error);
-    } finally {
       setIsProcessing(false);
     }
   };

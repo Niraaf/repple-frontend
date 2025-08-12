@@ -2,7 +2,7 @@
 
 export const ReadyView = ({ sessionData, currentStep, currentStepNumber, currentSetNumber, advanceState }) => {
     const isResuming = currentStepNumber !== 1 || currentSetNumber !== 1;
-    const readyMessage = `${isResuming ? `Next up: ${currentStep.exercise.name} - Set ${currentSetNumber} of ${currentStep?.target_sets}` : `First up: ${currentStep?.exercise?.name}`}`;
+    const readyMessage = `${isResuming ? `Next up: ${currentStep?.exercise?.name} - Set ${currentSetNumber} of ${currentStep?.target_sets}` : `First up: ${currentStep?.exercise?.name}`}`;
     return (
         <div className="flex flex-col items-center justify-center text-center w-full min-h-screen p-6">
             <h1 className="text-xl">{`You are about to ${isResuming ? 'resume' : 'start'}`}</h1>

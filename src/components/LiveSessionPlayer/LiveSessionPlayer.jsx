@@ -23,13 +23,13 @@ export default function LiveSessionPlayerPage() {
     const { userProfile } = useAuth();
 
     const [player, setPlayer] = useState({
-        state: 'ready',
+        state: 'loading',
         stepIndex: 0,
         setNumber: 1,
     });
     const [seconds, setSeconds] = useState(0);
     const [isTimerActive, setIsTimerActive] = useState(false);
-    const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
+    const hasCalculatedResume = useRef(false);
 
     const { data: sessionData, isLoading, isError, error } = useSessionDetails(sessionId, {
         enabled: router.isReady && !!sessionId && !!userProfile,
@@ -47,27 +47,39 @@ export default function LiveSessionPlayerPage() {
     const nextStep = useMemo(() => steps[player.stepIndex + 1], [steps, player.stepIndex]);
 
     useEffect(() => {
-        // Only run this logic if we have session data AND the initial load is not yet marked as complete.
-        if (sessionData && !isInitialLoadComplete) {
-            if (sessionData.logged_sets?.length > 0) {
-                const loggedSets = sessionData.logged_sets;
-                const lastLoggedSet = [...loggedSets].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
-                if (lastLoggedSet) {
-                    const lastStepIndex = steps.findIndex(step => step.exercise_id === lastLoggedSet.exercise_id);
-                    if (lastStepIndex !== -1) {
-                        const lastStep = steps[lastStepIndex];
-                        if (lastLoggedSet.set_number >= lastStep.target_sets) {
-                            setPlayer(prev => ({ ...prev, stepIndex: lastStepIndex + 1, setNumber: 1 }));
-                        } else {
-                            setPlayer(prev => ({ ...prev, stepIndex: lastStepIndex, setNumber: lastLoggedSet.set_number + 1 }));
-                        }
+        if (sessionData && !hasCalculatedResume.current) {
+            hasCalculatedResume.current = true;
+            
+            const loggedSets = sessionData.logged_sets || [];
+            if (loggedSets.length > 0) {
+                let resumeIndex = 0;
+                let resumeSetNumber = 1;
+                let foundResumePoint = false;
+
+                for (let i = 0; i < steps.length; i++) {
+                    const step = steps[i];
+                    if (step.step_type !== 'EXERCISE') continue;
+
+                    const loggedSetsForThisStep = loggedSets.filter(ls => ls.exercise_id === step.exercise_id);
+                    
+                    if (loggedSetsForThisStep.length < step.target_sets) {
+                        resumeIndex = i;
+                        resumeSetNumber = loggedSetsForThisStep.length + 1;
+                        foundResumePoint = true;
+                        break;
                     }
                 }
+
+                if (!foundResumePoint) {
+                    setPlayer({ state: 'finished', stepIndex: steps.length, setNumber: 1 });
+                } else {
+                    setPlayer({ state: 'ready', stepIndex: resumeIndex, setNumber: resumeSetNumber });
+                }
+            } else {
+                setPlayer({ state: 'ready', stepIndex: 0, setNumber: 1 });
             }
-            // Mark the initial load as complete so this never runs again.
-            setIsInitialLoadComplete(true);
         }
-    }, [sessionData, isInitialLoadComplete, steps]);
+    }, [sessionData, steps]);
 
     const advanceState = (action) => {
         const currentStepForTransition = steps[player.stepIndex];
@@ -152,7 +164,6 @@ export default function LiveSessionPlayerPage() {
         if (!currentStep) return;
         const isTimed = currentStep.exercise?.mechanics?.some(m => m.name.includes('Isometric') || m.name.includes('Stretching'));
 
-        timer.reset();
         if (player.state === 'active_set') {
             if (isTimed) timer.start(currentStep.target_duration_seconds);
             else timer.start();
@@ -167,7 +178,7 @@ export default function LiveSessionPlayerPage() {
         }
     }, [player.state, currentStep]);
 
-    if (isLoading && !isInitialLoadComplete) {
+    if (isLoading || player.state === 'loading') {
         return <div className="flex justify-center items-center h-screen text-lg text-gray-500 animate-pulse">Preparing your session...</div>;
     }
 

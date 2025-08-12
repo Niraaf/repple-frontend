@@ -1,7 +1,6 @@
 import WorkoutBuilder from "@/components/WorkoutBuilder/WorkoutBuilder";
 import { createSupabaseServerClient } from "@/supabase/supabaseServer";
 import { notFound } from "next/navigation";
-import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
