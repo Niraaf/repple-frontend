@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/authContext';
+import { useUnitPreference } from '@/contexts/unitPreferenceContext';
 import { useUpdateProfile } from '@/hooks/useProfile';
 import toast from 'react-hot-toast';
 

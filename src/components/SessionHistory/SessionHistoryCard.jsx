@@ -1,5 +1,6 @@
 'use client';
 import { useRouter } from "nextjs-toploader/app"
+import { useUnitPreference } from "@/contexts/unitPreferenceContext";
 
 const workoutTypeStyles = {
     'Strength': { icon: '💪', color: 'text-red-500' },
@@ -11,6 +12,7 @@ const workoutTypeStyles = {
 };
 
 export default function SessionHistoryCard({ session }) {
+    const { displayUnit, convertWeight } = useUnitPreference();
     const router = useRouter();
     const date = new Date(session.started_at);
     const style = workoutTypeStyles[session.workout_type] || workoutTypeStyles['General'];
@@ -34,7 +36,7 @@ export default function SessionHistoryCard({ session }) {
                     <p className={`font-semibold text-lg ${style.color}`}>{session.active_time_minutes || 0} min</p>
                     <p className="text-xs text-gray-400">
                         {session.workout_type === 'Strength' || session.workout_type === 'Hypertrophy'
-                            ? `${session.total_volume || 0} kg total volume`
+                            ? `${convertWeight(session.total_volume || 0)} ${displayUnit} total volume`
                             : `${session.workout_type}`
                         }
                     </p>

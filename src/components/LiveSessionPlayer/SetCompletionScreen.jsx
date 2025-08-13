@@ -2,9 +2,11 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/contexts/authContext';
+import { useUnitPreference } from '@/contexts/unitPreferenceContext';
 
 export default function SetCompletionScreen({ step, nextStep, currentSetNumber, measuredDuration, onLogSet }) {
     const { userProfile } = useAuth();
+    const { convertWeight, convertToKg, displayUnit } = useUnitPreference();
 
     const exercise = step.exercise;
     const isStretch = exercise.mechanics?.some(m => m.name.includes('Stretching'));
@@ -51,7 +53,7 @@ export default function SetCompletionScreen({ step, nextStep, currentSetNumber, 
                                 {/* Weight Input */}
                                 {!isBodyweight && (
                                     <div className='flex justify-between items-center'>
-                                        <label htmlFor="weightInput" className={labelClasses}>Weight ({userProfile?.unit_preference || 'kg'}):</label>
+                                        <label htmlFor="weightInput" className={labelClasses}>Weight ({displayUnit}):</label>
                                         <input
                                             id="weightInput"
                                             type="text"
@@ -59,7 +61,7 @@ export default function SetCompletionScreen({ step, nextStep, currentSetNumber, 
                                             pattern="[0-9]*.[0-9]*"
                                             value={weight}
                                             placeholder="0"
-                                            onChange={e => setWeight(e.target.value.replace(/[^0-9.]/g, ''))}
+                                            onChange={e => setWeight(convertToKg(parseFloat(e.target.value.replace(/[^0-9.]/g, '') || 0)))}
                                             autoFocus
                                             className={inputClasses}
                                         />

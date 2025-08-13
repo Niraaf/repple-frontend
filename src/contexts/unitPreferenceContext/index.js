@@ -10,6 +10,7 @@ export const useUnitPreference = () => {
 };
 
 const KG_TO_LBS = 2.20462;
+const LBS_TO_KG = 1 / KG_TO_LBS;
 
 export const UnitPreferenceProvider = ({ children }) => {
     const { userProfile } = useAuth();
@@ -22,9 +23,17 @@ export const UnitPreferenceProvider = ({ children }) => {
         return weightInKg;
     };
 
+    const convertToKg = (weightInPreference) => {
+        if (unitPreference === 'lbs') {
+            return Math.round((weightInPreference * LBS_TO_KG) * 100) / 100;
+        }
+        return weightInPreference;
+    };
+
     const value = useMemo(() => ({
-        unitPreference,
+        displayUnit: unitPreference,
         convertWeight,
+        convertToKg
     }), [unitPreference]);
 
     return (

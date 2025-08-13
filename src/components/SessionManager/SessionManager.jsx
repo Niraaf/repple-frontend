@@ -24,7 +24,7 @@ export default function SessionManager() {
 
     useEffect(() => {
         if (!userLoading && isSuccess && activeSession && !hasShownPrompt.current) {
-            hasShownPrompt.current = true; // Prevent prompt from showing multiple times
+            hasShownPrompt.current = true;
 
             const timeSinceLastAction = (Date.now() - new Date(activeSession.last_action_at).getTime());
             const minutesSince = Math.round(timeSinceLastAction / 1000 / 60);

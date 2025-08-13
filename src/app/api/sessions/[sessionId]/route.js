@@ -9,7 +9,7 @@ export async function GET(req, { params }) {
     if (authError) return authError;
 
     try {
-        const { sessionId } = params;
+        const { sessionId } = await params;
         if (!UUID_REGEX.test(sessionId)) {
             return NextResponse.json({ message: "Invalid session ID format." }, { status: 400 });
         }

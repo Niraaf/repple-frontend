@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import Link from 'next/link';
+import { useUnitPreference } from '@/contexts/unitPreferenceContext';
 
 // A small, reusable component for displaying a single statistic.
 const StatCard = ({ label, value, unit }) => (
@@ -54,6 +55,7 @@ export default function SessionSummary({ sessionData }) {
     } = sessionData;
 
     const date = new Date(started_at);
+    const { displayUnit, convertWeight } = useUnitPreference();
 
     // THE FIX: The useMemo hook now builds the complete, final data structure for the log.
     const displayLog = useMemo(() => {
@@ -79,7 +81,7 @@ export default function SessionSummary({ sessionData }) {
                     if (isStretch || step.exercise?.mechanics?.some(m => m.name === 'Isometric')) {
                         performance = `${loggedSet.duration_seconds}s hold`;
                     } else {
-                        const weightString = isBodyweight ? 'Bodyweight' : `${loggedSet.weight_kg}kg`;
+                        const weightString = isBodyweight ? 'Bodyweight' : `${convertWeight(loggedSet.weight_kg)} ${displayUnit}`;
                         const amrapTag = isAmrap ? ' (AMRAP)' : '';
                         performance = `${loggedSet.reps_completed} reps @ ${weightString}${amrapTag}`;
                     }
@@ -136,7 +138,7 @@ export default function SessionSummary({ sessionData }) {
             {/* Stats Overview Grid */}
             <div className="w-full max-w-3xl grid grid-cols-2 md:grid-cols-4 gap-4">
                 <StatCard label="Active Time" value={Math.ceil(active_time_seconds / 60)} unit="min" />
-                <StatCard label="Total Volume" value={total_volume || 0} unit="kg" />
+                <StatCard label="Total Volume" value={convertWeight(total_volume || 0)} unit={displayUnit} />
                 <StatCard label="Total Reps" value={total_reps || 0} unit="reps" />
                 <StatCard label="Sets" value={total_sets || 0} unit="sets" />
             </div>

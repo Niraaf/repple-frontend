@@ -191,7 +191,6 @@ export const useActiveSession = () => {
         queryKey: sessionsKeys.active(),
         queryFn: getActiveSession,
         enabled: !userLoading && !!user,
-        refetchOnWindowFocus: false,
         refetchOnReconnect: false,
     });
 };
