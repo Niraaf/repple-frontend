@@ -29,8 +29,8 @@ const LogEntry = ({ item }) => {
                     <p className="font-bold text-gray-800">{item.name}</p>
                     <p className="text-xs text-gray-500">{item.subtext}</p>
                 </div>
-                <div className="text-right">
-                    <p className="font-semibold text-gray-700">{item.performance}</p>
+                <div className="text-right font-semibold text-gray-700">
+                    {item.performance}
                 </div>
             </div>
         </div>
@@ -42,8 +42,8 @@ export default function SessionSummary({ sessionData }) {
         session_id,
         workout_name,
         workout_plan: plan,
-        logged_sets = [],
-        logged_rests = [],
+        logged_sets,
+        logged_rests,
         started_at,
         total_paused_seconds,
         active_time_seconds,
@@ -55,36 +55,45 @@ export default function SessionSummary({ sessionData }) {
 
     const date = new Date(started_at);
 
+    // THE FIX: The useMemo hook now builds the complete, final data structure for the log.
     const displayLog = useMemo(() => {
         const log = [];
         if (!plan?.workout_steps) return [];
 
-        // Sort the rests once by their creation time.
         const sortedRests = [...logged_rests].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-        let restIndex = 0; // This is our pointer for the next available rest.
+        let restIndex = 0;
 
         plan.workout_steps.forEach(step => {
             if (step.step_type === 'EXERCISE') {
                 const isStretch = step.exercise?.mechanics?.some(m => m.name === 'Stretching');
+                const isBodyweight = step.exercise?.equipments?.some(e => e.name === 'Bodyweight');
+                const isAmrap = step.target_reps === 'AMRAP';
 
                 const setsForThisStep = logged_sets
                     .filter(ls => ls.exercise_id === step.exercise_id)
                     .sort((a, b) => a.set_number - b.set_number);
 
                 setsForThisStep.forEach(loggedSet => {
-                    // Add the logged set to our display log.
+                    // Build the performance string here
+                    let performance = '';
+                    if (isStretch || step.exercise?.mechanics?.some(m => m.name === 'Isometric')) {
+                        performance = `${loggedSet.duration_seconds}s hold`;
+                    } else {
+                        const weightString = isBodyweight ? 'Bodyweight' : `${loggedSet.weight_kg}kg`;
+                        const amrapTag = isAmrap ? ' (AMRAP)' : '';
+                        performance = `${loggedSet.reps_completed} reps @ ${weightString}${amrapTag}`;
+                    }
+
                     log.push({
                         id: loggedSet.id,
                         isSet: true,
                         name: step.exercise.name,
                         subtext: `Set ${loggedSet.set_number}`,
-                        performance: `${loggedSet.reps_completed} reps @ ${loggedSet.weight_kg}kg`
+                        performance: performance
                     });
 
-                    // Check if an intra-set rest should follow.
                     const isLastSet = loggedSet.set_number >= step.target_sets;
                     if (!isLastSet && !isStretch) {
-                        // If a rest is expected, take the next one from our sorted list.
                         if (restIndex < sortedRests.length) {
                             const intraSetRest = sortedRests[restIndex];
                             log.push({
@@ -94,12 +103,11 @@ export default function SessionSummary({ sessionData }) {
                                 subtext: `Target: ${intraSetRest.target_duration_seconds}s`,
                                 performance: `${intraSetRest.actual_duration_seconds}s`
                             });
-                            restIndex++; // Move the pointer to the next rest
+                            restIndex++;
                         }
                     }
                 });
             } else if (step.step_type === 'REST') {
-                // If the step is a dedicated rest block, take the next available rest.
                 if (restIndex < sortedRests.length) {
                     const restBlock = sortedRests[restIndex];
                     log.push({
@@ -109,7 +117,7 @@ export default function SessionSummary({ sessionData }) {
                         subtext: `Target: ${restBlock.target_duration_seconds}s`,
                         performance: `${restBlock.actual_duration_seconds}s`
                     });
-                    restIndex++; // Move the pointer to the next rest
+                    restIndex++;
                 }
             }
         });
@@ -140,7 +148,7 @@ export default function SessionSummary({ sessionData }) {
                 <h2 className="text-lg font-bold text-gray-700 mb-3">Workout Log</h2>
                 <div className="flex flex-col gap-3 text-left">
                     {displayLog.map(item => (
-                        <LogEntry key={item.id} item={item} />
+                        <LogEntry key={item.id} item={item} plan={plan} />
                     ))}
                 </div>
             </div>
