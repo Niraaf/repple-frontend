@@ -34,7 +34,7 @@ export default function MobileNavModal({ onClose, userLoggedIn, handleSignOut, n
                         <button onClick={() => handleNavClick('/dashboard')} className="text-left hover:text-blue-500">Dashboard</button>
                         <button onClick={() => handleNavClick('/workouts')} className="text-left hover:text-blue-500">My Workouts</button>
                         <button onClick={() => handleNavClick('/history')} className="text-left hover:text-blue-500">History</button>
-                        <button onClick={() => handleNavClick('/settings')} className="text-left hover:text-blue-500">Profile</button>
+                        <button onClick={() => handleNavClick('/profile')} className="text-left hover:text-blue-500">Profile</button>
                     </nav>
 
                     {/* Auth Buttons */}

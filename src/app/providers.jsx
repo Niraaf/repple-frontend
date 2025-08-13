@@ -2,6 +2,7 @@
 
 import { AuthProvider } from "@/contexts/authContext";
 import { UnsavedChangesProvider } from "@/contexts/unsavedChangesContext";
+import { UnitPreferenceProvider } from "@/contexts/unitPreferenceContext";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import BlobBackground from "@/components/BlobBackground/BlobBackground";
@@ -37,13 +38,15 @@ export default function Providers({ children }) {
             <QueryClientProvider client={queryClient}>
                 <AuthProvider>
                     <UnsavedChangesProvider>
-                        <SessionManager />
-                        <BlobBackground />
-                        <div className="relative z-10">
-                            <Navbar />
-                            {children}
-                        </div>
-                        <Toaster position="top-center" reverseOrder={false} />
+                        <UnitPreferenceProvider>
+                            <SessionManager />
+                            <BlobBackground />
+                            <div className="relative z-10">
+                                <Navbar />
+                                {children}
+                            </div>
+                            <Toaster position="top-center" reverseOrder={false} />
+                        </UnitPreferenceProvider>
                     </UnsavedChangesProvider>
                 </AuthProvider>
             </QueryClientProvider>

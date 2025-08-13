@@ -99,7 +99,7 @@ export default function Navbar() {
                     <Link href="/dashboard" onClick={(e) => handleLinkClick(e, '/dashboard')} className="hover:text-blue-500 transition-colors cursor-pointer">Dashboard</Link>
                     <Link href="/workouts" onClick={(e) => handleLinkClick(e, '/workouts')} className="hover:text-blue-500 transition-colors cursor-pointer">My Workouts</Link>
                     <Link href="/history" onClick={(e) => handleLinkClick(e, '/history')} className="hover:text-blue-500 transition-colors cursor-pointer">History</Link>
-                    <Link href="/settings" onClick={(e) => handleLinkClick(e, '/settings')} className="hover:text-blue-500 transition-colors cursor-pointer">Profile</Link>
+                    <Link href="/profile" onClick={(e) => handleLinkClick(e, '/profile')} className="hover:text-blue-500 transition-colors cursor-pointer">Profile</Link>
                 </nav>
 
                 {/* RIGHT SIDE */}
