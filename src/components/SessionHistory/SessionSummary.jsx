@@ -57,12 +57,11 @@ export default function SessionSummary({ sessionData }) {
     const date = new Date(started_at);
     const { displayUnit, convertWeight } = useUnitPreference();
 
-    // THE FIX: The useMemo hook now builds the complete, final data structure for the log.
     const displayLog = useMemo(() => {
         const log = [];
         if (!plan?.workout_steps) return [];
 
-        const sortedRests = [...logged_rests].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+        const sortedRests = [...(logged_rests ?? [])].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
         let restIndex = 0;
 
         plan.workout_steps.forEach(step => {
