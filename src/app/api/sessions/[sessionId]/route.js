@@ -32,7 +32,7 @@ export async function GET(req, { params }) {
 
         const responsePayload = {
             ...session,
-            workout: session.workout_plan_snapshot 
+            workout: session.workout_plan_snapshot
         };
 
         return NextResponse.json(responsePayload, { status: 200 });
@@ -40,5 +40,31 @@ export async function GET(req, { params }) {
     } catch (error) {
         console.error(`Error fetching session:`, error);
         return NextResponse.json({ message: `Failed to fetch session`, error: error.message }, { status: 500 });
+    }
+}
+
+export async function DELETE(req, { params }) {
+    const { userProfile, error: authError } = await getAuthenticatedUser(req);
+    if (authError) return authError;
+
+    try {
+        const { sessionId } = await params;
+        if (!UUID_REGEX.test(sessionId)) {
+            return NextResponse.json({ message: "Invalid session ID format." }, { status: 400 });
+        }
+
+        const { error: deleteError } = await supabase
+            .from('sessions')
+            .delete()
+            .eq('id', sessionId)
+            .eq('user_id', userProfile.id);
+
+        if (deleteError) throw deleteError;
+
+        return NextResponse.json({ message: "Session deleted successfully." }, { status: 200 });
+
+    } catch (error) {
+        console.error(`Error deleting session:`, error);
+        return NextResponse.json({ message: `Failed to delete session`, error: error.message }, { status: 500 });
     }
 }
