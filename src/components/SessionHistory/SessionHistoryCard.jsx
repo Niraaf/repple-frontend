@@ -36,7 +36,7 @@ export default function SessionHistoryCard({ session }) {
                     <p className={`font-semibold text-lg ${style.color}`}>{session.active_time_minutes || 0} min</p>
                     <p className="text-xs text-gray-400">
                         {session.workout_type === 'Strength' || session.workout_type === 'Hypertrophy'
-                            ? `${convertWeight(session.total_volume || 0)} ${displayUnit} total volume`
+                            ? `${convertWeight(convertWeight(session.total_volume) || 0)} ${displayUnit} total volume`
                             : `${session.workout_type}`
                         }
                     </p>

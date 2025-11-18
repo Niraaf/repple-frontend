@@ -96,7 +96,7 @@ export default function SessionSummary({ sessionData }) {
                     if (isStretch || step.exercise?.mechanics?.some(m => m.name === 'Isometric')) {
                         performance = `${loggedSet.duration_seconds}s hold`;
                     } else {
-                        const weightString = isBodyweight ? 'Bodyweight' : `${loggedSet.weight_kg}kg`;
+                        const weightString = isBodyweight ? 'Bodyweight' : `${convertWeight(loggedSet.weight_kg)} ${displayUnit}`;
                         const amrapTag = isAmrap ? ' (AMRAP)' : '';
                         performance = `${loggedSet.reps_completed} reps @ ${weightString}${amrapTag}`;
                     }
