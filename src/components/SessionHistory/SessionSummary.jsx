@@ -139,7 +139,7 @@ export default function SessionSummary({ sessionData }) {
             }
         });
         return log;
-    }, [plan, logged_sets, logged_rests]);
+    }, [plan, logged_sets, logged_rests, displayUnit, convertWeight]);
 
     return (
         <div className="flex flex-col items-center gap-8 min-h-screen p-6 pt-24 md:pt-32 w-full">
