@@ -34,7 +34,7 @@ export const UnitPreferenceProvider = ({ children }) => {
         displayUnit: unitPreference,
         convertWeight,
         convertToKg
-    }), [unitPreference]);
+    }), [unitPreference, convertToKg, convertWeight]);
 
     return (
         <UnitPreferenceContext.Provider value={value}>
