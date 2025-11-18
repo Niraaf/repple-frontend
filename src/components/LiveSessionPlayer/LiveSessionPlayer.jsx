@@ -5,7 +5,6 @@ import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/authContext";
 import { useSessionDetails, useLogSet, useLogRest, useFinishSession } from "@/hooks/useSession";
 import { useBlobTheme } from "@/hooks/useBlobTheme";
-import Link from 'next/link';
 
 import CurrentStepDisplay from "@/components/LiveSessionPlayer/CurrentStepDisplay";
 import PlayerControls from "@/components/LiveSessionPlayer/PlayerControls";

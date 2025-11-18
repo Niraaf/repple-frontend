@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo } from 'react';
-import Link from 'next/link';
 import { useUnitPreference } from '@/contexts/unitPreferenceContext';
 
 // A small, reusable component for displaying a single statistic.
@@ -14,7 +13,7 @@ const StatCard = ({ label, value, unit }) => (
     </div>
 );
 
-// A badge to highlight Personal Records
+// A badge to highlight Personal Records (Not implemented)
 const PRBadge = () => (
     <span className="ml-2 px-2 py-0.5 bg-yellow-300 text-yellow-800 text-xs font-bold rounded-full">
         PR
@@ -61,7 +60,9 @@ export default function SessionSummary({ sessionData }) {
         const log = [];
         if (!plan?.workout_steps) return [];
 
-        const sortedRests = [...(logged_rests ?? [])].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+        let remainingSets = [...logged_sets].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+        const remainingRests = [...logged_rests].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
         let restIndex = 0;
 
         plan.workout_steps.forEach(step => {
@@ -70,23 +71,38 @@ export default function SessionSummary({ sessionData }) {
                 const isBodyweight = step.exercise?.equipments?.some(e => e.name === 'Bodyweight');
                 const isAmrap = step.target_reps === 'AMRAP';
 
-                const setsForThisStep = logged_sets
-                    .filter(ls => ls.exercise_id === step.exercise_id)
-                    .sort((a, b) => a.set_number - b.set_number);
+                const setsForThisStep = [];
+                const nextRemainingSets = [];
+                let hasStartedCollecting = false;
+
+                for (const set of remainingSets) {
+                    if (set.exercise_id === step.exercise_id) {
+                        if (hasStartedCollecting && set.set_number === 1) {
+                            nextRemainingSets.push(set);
+                            continue;
+                        }
+
+                        setsForThisStep.push(set);
+                        hasStartedCollecting = true;
+                    } else {
+                        nextRemainingSets.push(set); 
+                    }
+                }
+
+                remainingSets = nextRemainingSets;
 
                 setsForThisStep.forEach(loggedSet => {
-                    // Build the performance string here
                     let performance = '';
                     if (isStretch || step.exercise?.mechanics?.some(m => m.name === 'Isometric')) {
                         performance = `${loggedSet.duration_seconds}s hold`;
                     } else {
-                        const weightString = isBodyweight ? 'Bodyweight' : `${convertWeight(loggedSet.weight_kg)} ${displayUnit}`;
+                        const weightString = isBodyweight ? 'Bodyweight' : `${loggedSet.weight_kg}kg`;
                         const amrapTag = isAmrap ? ' (AMRAP)' : '';
                         performance = `${loggedSet.reps_completed} reps @ ${weightString}${amrapTag}`;
                     }
 
                     log.push({
-                        id: loggedSet.id,
+                        uniqueKey: `set-${loggedSet.id}`,
                         isSet: true,
                         name: step.exercise.name,
                         subtext: `Set ${loggedSet.set_number}`,
@@ -95,10 +111,10 @@ export default function SessionSummary({ sessionData }) {
 
                     const isLastSet = loggedSet.set_number >= step.target_sets;
                     if (!isLastSet && !isStretch) {
-                        if (restIndex < sortedRests.length) {
-                            const intraSetRest = sortedRests[restIndex];
+                        if (restIndex < remainingRests.length) {
+                            const intraSetRest = remainingRests[restIndex];
                             log.push({
-                                id: intraSetRest.id,
+                                uniqueKey: `rest-${intraSetRest.id}`,
                                 isSet: false,
                                 name: 'Rest',
                                 subtext: `Target: ${intraSetRest.target_duration_seconds}s`,
@@ -109,10 +125,10 @@ export default function SessionSummary({ sessionData }) {
                     }
                 });
             } else if (step.step_type === 'REST') {
-                if (restIndex < sortedRests.length) {
-                    const restBlock = sortedRests[restIndex];
+                if (restIndex < remainingRests.length) {
+                    const restBlock = remainingRests[restIndex];
                     log.push({
-                        id: restBlock.id,
+                        uniqueKey: `rest-${restBlock.id}`,
                         isSet: false,
                         name: 'Rest Block',
                         subtext: `Target: ${restBlock.target_duration_seconds}s`,
@@ -129,7 +145,6 @@ export default function SessionSummary({ sessionData }) {
         <div className="flex flex-col items-center gap-8 min-h-screen p-6 pt-24 md:pt-32 w-full">
             {/* Header Section */}
             <div className="text-center w-full max-w-3xl">
-                <Link href="/history" className="text-sm text-purple-600 hover:underline">← Back to History</Link>
                 <p className="text-gray-500 mt-4">{date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
                 <h1 className="text-4xl font-extrabold tracking-tight mt-1 mb-6">{workout_name}</h1>
             </div>
@@ -149,7 +164,7 @@ export default function SessionSummary({ sessionData }) {
                 <h2 className="text-lg font-bold text-gray-700 mb-3">Workout Log</h2>
                 <div className="flex flex-col gap-3 text-left">
                     {displayLog.map(item => (
-                        <LogEntry key={item.id} item={item} plan={plan} />
+                        <LogEntry key={item.uniqueKey} item={item} />
                     ))}
                 </div>
             </div>

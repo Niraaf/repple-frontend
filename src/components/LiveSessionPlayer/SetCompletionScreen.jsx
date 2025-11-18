@@ -6,7 +6,7 @@ import { useUnitPreference } from '@/contexts/unitPreferenceContext';
 
 export default function SetCompletionScreen({ step, nextStep, currentSetNumber, measuredDuration, onLogSet }) {
     const { userProfile } = useAuth();
-    const { convertWeight, convertToKg, displayUnit } = useUnitPreference();
+    const { convertToKg, displayUnit } = useUnitPreference();
 
     const exercise = step.exercise;
     const isStretch = exercise.mechanics?.some(m => m.name.includes('Stretching'));
@@ -15,14 +15,19 @@ export default function SetCompletionScreen({ step, nextStep, currentSetNumber, 
 
     const isTimed = exercise.mechanics?.some(m => m.name.includes('Isometric') || m.name.includes('Stretching'));
     const isBodyweight = exercise.equipments?.some(e => e.name === 'Bodyweight');
-    // Local state for the form inputs
+
+    const initialReps = String(step.target_reps).split('-')[0].replace(/\D/g, '') || '8';
     const [weight, setWeight] = useState('');
-    const [reps, setReps] = useState(step.target_reps === "AMRAP" ? '' : step.target_reps?.split('-')[1] || '10');
+    const [reps, setReps] = useState(step.target_reps === "AMRAP" ? '' : initialReps);
 
     const handleSubmit = (e) => {
         e.preventDefault();
+
+        const weightValue = parseFloat(weight || 0);
+        const weightInKg = convertToKg(weightValue);
+
         onLogSet({
-            weight_kg: isBodyweight ? 0 : weight || 0,
+            weight_kg: isBodyweight ? 0 : weightInKg,
             reps_completed: isTimed ? 1 : reps,
             duration_seconds: measuredDuration,
         });
@@ -34,7 +39,6 @@ export default function SetCompletionScreen({ step, nextStep, currentSetNumber, 
 
     return (
         <div className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm flex justify-center items-center p-4">
-            {/* Main Card */}
             <div
                 className="bg-white/50 border-4 border-b-0 border-white/30 p-6 sm:p-8 rounded-3xl shadow-2xl w-full max-w-sm animate-fade-in backdrop-blur-lg"
                 onClick={(e) => e.stopPropagation()}
@@ -48,41 +52,37 @@ export default function SetCompletionScreen({ step, nextStep, currentSetNumber, 
                             Your hold time has been recorded.
                         </p>
                     ) : (
-                        <>
-                            <div className="space-y-4">
-                                {/* Weight Input */}
-                                {!isBodyweight && (
-                                    <div className='flex justify-between items-center'>
-                                        <label htmlFor="weightInput" className={labelClasses}>Weight ({displayUnit}):</label>
-                                        <input
-                                            id="weightInput"
-                                            type="text"
-                                            inputMode="numeric"
-                                            pattern="[0-9]*.[0-9]*"
-                                            value={weight}
-                                            placeholder="0"
-                                            onChange={e => setWeight(convertToKg(parseFloat(e.target.value.replace(/[^0-9.]/g, '') || 0)))}
-                                            autoFocus
-                                            className={inputClasses}
-                                        />
-                                    </div>
-                                )}
-                                {/* Reps Input */}
+                        <div className="space-y-4">
+                            {!isBodyweight && (
                                 <div className='flex justify-between items-center'>
-                                    <label htmlFor="repsInput" className={labelClasses}>Reps:</label>
+                                    <label htmlFor="weightInput" className={labelClasses}>Weight ({displayUnit}):</label>
                                     <input
-                                        id="repsInput"
+                                        id="weightInput"
                                         type="text"
-                                        inputMode="numeric"
-                                        pattern="[0-9]*"
-                                        value={reps}
-                                        placeholder="reps"
-                                        onChange={e => setReps(e.target.value.replace(/[^0-9]/g, ''))}
+                                        inputMode="decimal"
+                                        pattern="[0-9]*[.]?[0-9]*"
+                                        value={weight}
+                                        placeholder="0"
+                                        onChange={e => setWeight(e.target.value.replace(/[^0-9.]/g, ''))}
+                                        autoFocus
                                         className={inputClasses}
                                     />
                                 </div>
+                            )}
+                            <div className='flex justify-between items-center'>
+                                <label htmlFor="repsInput" className={labelClasses}>Reps:</label>
+                                <input
+                                    id="repsInput"
+                                    type="text"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
+                                    value={reps}
+                                    placeholder="reps"
+                                    onChange={e => setReps(e.target.value.replace(/[^0-9]/g, ''))}
+                                    className={inputClasses}
+                                />
                             </div>
-                        </>
+                        </div>
                     )}
 
                     {showNextUpForStretch && (
@@ -92,7 +92,6 @@ export default function SetCompletionScreen({ step, nextStep, currentSetNumber, 
                         </div>
                     )}
 
-                    {/* Submit Button */}
                     <button
                         type="submit"
                         className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-bold py-3 px-4 rounded-3xl shadow-lg transition transform hover:scale-105 cursor-pointer"
